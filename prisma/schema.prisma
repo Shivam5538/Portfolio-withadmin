@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  name        String
+  tagline     String
+  bio         String   
+  avatarUrl   String?
+  resumeUrl   String?
+  socialLinks String   @default("{}")
+  stats       String   @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Project {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  description   String   
+  longDesc      String?  
+  coverImageUrl String?
+  images        String   @default("[]")
+  category      String   @default("Full-Stack")
+  techStack     String   @default("[]")
+  liveUrl       String?
+  githubUrl     String?
+  challenge     String?
+  solution      String?
+  result        String?
+  featured      Boolean  @default(false)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Skill {
+  id               String   @id @default(cuid())
+  name             String
+  category         String   @default("Frontend")
+  iconKey          String   @default("SiCode")
+  tileSize         String   @default("1x1")
+  proficiencyLevel Int?     @default(80)
+  order            Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Technology {
+  id              String           @id @default(cuid())
+  name            String
+  category        String           @default("Frontend")
+  iconKey         String           @default("SiCode")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  slotAssignments SlotAssignment[]
+}
+
+model LayoutSetting {
+  id                  String   @id @default("default")
+  activeTemplateId    String   @default("template_1")
+  activeStatsTemplate String   @default("template_1")
+  updatedAt           DateTime @updatedAt
+}
+
+model SlotAssignment {
+  id           String     @id @default(cuid())
+  templateId   String
+  slotId       String
+  technologyId String
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([templateId, slotId])
+}
+
+model Experience {
+  id          String    @id @default(cuid())
+  role        String
+  company     String
+  startDate   DateTime
+  endDate     DateTime?
+  description String    
+  techTags    String    @default("[]")
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String   
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AdminUser {
+  id                     String    @id @default(cuid())
+  email                  String    @unique
+  passwordHash           String
+  passwordResetTokenHash String?
+  passwordResetExpiresAt DateTime?
+  pendingEmail           String?
+  emailChangeTokenHash   String?
+  emailChangeExpiresAt   DateTime?
+  createdAt              DateTime  @default(now())
+}
+
+model SiteContent {
+  id                   String   @id @default(cuid())
+  
+  // Hero Section
+  availabilityStatus   String   @default("Available for new opportunities")
+  isAvailable          Boolean  @default(true)
+  heroGreeting         String   @default("Hi, I'm")
+  heroName             String   @default("Alex Morgan")
+  heroHeadlineLine1    String   @default("I build")
+  heroHeadlineLine2    String   @default("digital experiences.")
+  heroSubtext          String   @default("Full-stack developer passionate about crafting clean, performant, and beautiful web applications. Turning complex problems into elegant solutions.")
+  resumeUrl            String?  @default("#")
+  primaryCtaLabel      String   @default("View My Work")
+  primaryCtaLink       String   @default("#projects")
+  secondaryCtaLabel    String   @default("Get in Touch")
+  secondaryCtaLink     String   @default("#contact")
+  heroResumeLabel      String   @default("Download CV")
+  heroTechMarquee      String   @default("[\"React\",\"Next.js\",\"TypeScript\",\"Node.js\",\"PostgreSQL\",\"GraphQL\"]")
+
+
+  // About Section
+  aboutEyebrow         String   @default("ABOUT ME")
+  aboutHeadline        String   @default("Building interfaces for the agent-first era — still by hand.")
+  aboutHeadlineLine1   String   @default("Driven by curiosity,")
+  aboutHeadlineLine2   String   @default("built for performance.")
+  aboutBio             String   @default("I'm a passionate full-stack developer who loves crafting clean, performant, and beautiful digital experiences.")
+  aboutLocation        String   @default("Pune, India")
+  aboutFocus           String   @default("Full-Stack Apps")
+  aboutAvatarUrl       String?
+  aboutFacts           String   @default("[]") // JSON string array of fact items { id, label, value, iconKey, accentColor }
+  aboutPrimaryCtaLabel String   @default("Download résumé")
+  aboutSecondaryCtaLabel String @default("View projects")
+  aboutSecondaryCtaLink String  @default("#projects")
+  coreTechs            String   @default("[]") // JSON string list of tags
+  aboutRoleTags        String   @default("[\"Full-Stack Developer\",\"UI/UX Engineer\"]")
+  aboutAvatarBadge     String   @default("Full-Stack Developer")
+  aboutFunFactPrefix   String   @default("When I'm not coding:")
+  funFactTitle         String   @default("Beyond code")
+  funFactDesc          String   @default("Avid rock climber & specialty coffee enthusiast.")
+  resumeCardLabel      String   @default("Resume")
+  resumeCardSubtext    String   @default("View my full experience")
+  
+  // Dynamic Stats JSON array
+  stats                String   @default("[]") // JSON string list of { label, value }
+
+  // Contact Section
+  contactEyebrow          String   @default("Say Hello")
+  contactHeadlineLine1    String   @default("Let's work")
+  contactHeadlineLine2    String   @default("together")
+  contactSubtext          String   @default("I'm currently open to new opportunities. Whether you have a project in mind, want to collaborate, or just want to say hi — my inbox is always open.")
+  contactResponseTimeText String   @default("Typical response time: within 24 hours")
+
+  // Socials / Contact & Footer
+  githubUrl            String?
+  linkedinUrl          String?
+  twitterUrl           String?
+  email                String?
+  footerText           String   @default("Alex Morgan")
+  footerCopyright      String   @default("All rights reserved.")
+  footerBackToTop      String   @default("Back to top")
+  footerLaunchYear     String?  @default("2024")
+  footerTagline        String?  @default("Crafted with clean code & modern web technologies.")
+  footerNavLinks       String   @default("[\"About\",\"Projects\",\"Experience\",\"Contact\"]")
+  storageQuotaGB       Float    @default(1.0)
+
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model MediaFile {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String   @unique
+  mimeType  String
+  size      Int
+  category  String   @default("General")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
