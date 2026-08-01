@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { findAutoIcon } from "@/lib/iconStore";
+import { logActivity } from "@/lib/activityLog";
 
 function safeParseJSON(str: string | null | undefined, fallback: any = []) {
   if (!str) return fallback;
@@ -112,6 +113,15 @@ export async function POST(request: Request) {
 
     const exp = await prisma.experience.create({ data: dataToSave });
     revalidatePath("/");
+
+    await logActivity({
+      section: "Experience",
+      entityId: exp.id,
+      entityLabel: `Experience: ${exp.role} at ${exp.company}`,
+      action: "create",
+      oldValue: null,
+      newValue: exp,
+    });
 
     const { ids, technologies } = await resolveAndMigrateTechTags(exp.techTags);
 

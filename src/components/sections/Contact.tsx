@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Github, Linkedin, Twitter, Mail, Send, CheckCircle, AlertCircle, Instagram, Youtube, MessageCircle, Globe } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea, Label, FormError } from "@/components/ui";
+import { SectionWrapper } from "@/components/ui/SectionWrapper";
 
 const schema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -27,6 +29,7 @@ function getSocialIcon(platform: string) {
   if (p.includes("github")) return Github;
   if (p.includes("linkedin")) return Linkedin;
   if (p.includes("twitter") || p.includes("x")) return Twitter;
+  if (p.includes("whatsapp") || p.includes("wa.me")) return FaWhatsapp;
   if (p.includes("mail")) return Mail;
   if (p.includes("insta")) return Instagram;
   if (p.includes("youtube")) return Youtube;
@@ -44,6 +47,22 @@ export default function Contact({ siteContent }: ContactProps) {
   if (content.githubUrl) socialLinks.push({ href: content.githubUrl, icon: Github, label: "GitHub" });
   if (content.linkedinUrl) socialLinks.push({ href: content.linkedinUrl, icon: Linkedin, label: "LinkedIn" });
   if (content.twitterUrl) socialLinks.push({ href: content.twitterUrl, icon: Twitter, label: "Twitter" });
+
+  let whatsappVal = content.whatsappUrl;
+  if (!whatsappVal && content.socialLinks) {
+    try {
+      const parsed = typeof content.socialLinks === "string" ? JSON.parse(content.socialLinks) : content.socialLinks;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        whatsappVal = parsed.whatsapp || parsed.whatsappUrl || "";
+      }
+    } catch {}
+  }
+  const rawWa = (whatsappVal || "https://wa.me/").trim();
+  const waHref = rawWa.startsWith("http://") || rawWa.startsWith("https://")
+    ? rawWa
+    : `https://wa.me/${rawWa.replace(/[^0-9+]/g, "")}`;
+  socialLinks.push({ href: waHref, icon: FaWhatsapp, label: "WhatsApp" });
+
   if (content.email) {
     const emailHref = content.email.includes("@") && !content.email.startsWith("mailto:")
       ? `mailto:${content.email}`
@@ -77,6 +96,7 @@ export default function Contact({ siteContent }: ContactProps) {
           { href: "https://github.com", icon: Github, label: "GitHub" },
           { href: "https://linkedin.com", icon: Linkedin, label: "LinkedIn" },
           { href: "https://twitter.com", icon: Twitter, label: "Twitter" },
+          { href: "https://wa.me/", icon: FaWhatsapp, label: "WhatsApp" },
           { href: "mailto:zawareshivam18@gmail.com", icon: Mail, label: "Email" },
         ];
 
@@ -105,18 +125,22 @@ export default function Contact({ siteContent }: ContactProps) {
   };
 
   return (
-    <section id="contact" className="section relative overflow-hidden bg-white py-16 sm:py-24 lg:py-28">
-      <div className="container">
-        <div className="divider mb-16" />
+    <SectionWrapper id="contact">
+      <section className="section relative overflow-hidden bg-white py-16 sm:py-24 lg:py-28">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute top-1/3 -right-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl" />
+        </div>
+        <div className="container relative z-10">
+          <div className="divider mb-16" />
 
-        <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-start">
-          {/* Left: Info */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6 }}
-          >
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-start">
+            {/* Left: Info */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6 }}
+            >
             <p className="section-label">{content.contactEyebrow ?? "Say Hello"}</p>
             <h2 className="text-3xl sm:text-4xl font-bold text-[#111111] mb-6">
               {content.contactHeadlineLine1 ?? "Let's work"}
@@ -274,6 +298,7 @@ export default function Contact({ siteContent }: ContactProps) {
           </motion.div>
         </div>
       </div>
-    </section>
+      </section>
+    </SectionWrapper>
   );
 }

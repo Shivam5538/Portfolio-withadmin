@@ -24,6 +24,7 @@ import {
   Youtube,
   MessageCircle,
 } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 
 export default function AdminContactClient({ initialData }: { initialData: any }) {
   const [formData, setFormData] = useState<any>(initialData || {});
@@ -112,6 +113,7 @@ export default function AdminContactClient({ initialData }: { initialData: any }
     if (p.includes("github")) return <Github size={14} />;
     if (p.includes("linkedin")) return <Linkedin size={14} />;
     if (p.includes("twitter") || p.includes("x")) return <Twitter size={14} />;
+    if (p.includes("whatsapp") || p.includes("wa.me")) return <FaWhatsapp size={14} className="text-emerald-500" />;
     if (p.includes("mail")) return <Mail size={14} />;
     if (p.includes("insta")) return <Instagram size={14} />;
     if (p.includes("youtube")) return <Youtube size={14} />;
@@ -333,6 +335,20 @@ export default function AdminContactClient({ initialData }: { initialData: any }
 
                 <div>
                   <label className="text-xs font-bold text-gray-700 mb-1 flex items-center gap-1.5">
+                    <FaWhatsapp size={14} className="text-emerald-500" /> WhatsApp URL / Number
+                  </label>
+                  <input
+                    type="text"
+                    name="whatsappUrl"
+                    value={formData.whatsappUrl || ""}
+                    onChange={handleChange}
+                    placeholder="https://wa.me/1234567890 or +1234567890"
+                    className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-gray-700 mb-1 flex items-center gap-1.5">
                     <Mail size={14} className="text-amber-500" /> Contact Email / Mailto
                   </label>
                   <input
@@ -464,6 +480,11 @@ export default function AdminContactClient({ initialData }: { initialData: any }
                 {formData.twitterUrl && (
                   <div className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-sky-500 shadow-2xs">
                     <Twitter size={14} />
+                  </div>
+                )}
+                {formData.whatsappUrl && (
+                  <div className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-emerald-500 shadow-2xs">
+                    <FaWhatsapp size={14} />
                   </div>
                 )}
                 {formData.email && (

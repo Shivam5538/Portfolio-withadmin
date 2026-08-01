@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef } from "react";
+import Image from "next/image";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
+import { SectionWrapper } from "@/components/ui/SectionWrapper";
 import {
   ExternalLink,
   Github,
@@ -49,34 +51,57 @@ export interface ProjectItem {
 
 interface ProjectsProps {
   projects: ProjectItem[];
+  isHomepage?: boolean;
 }
 
-export default function Projects({ projects }: ProjectsProps) {
+export default function Projects({ projects, isHomepage = true }: ProjectsProps) {
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [hoveredOverflowId, setHoveredOverflowId] = useState<string | null>(null);
+  const [displayLimit, setDisplayLimit] = useState(9);
 
-  // Extract unique categories from projects + defaults
-  const categoriesSet = new Set<string>();
-  projects.forEach((p) => {
-    if (p.category && p.category.trim()) {
-      categoriesSet.add(p.category.trim());
-    }
+  const FEATURED_CAP = 5;
+  const totalCount = projects.length;
+
+  // Homepage selection logic:
+  // If total projects <= 5, show ALL projects on homepage.
+  // If total projects > 5, prioritize featured projects, filling up to 5 max.
+  const featuredOnly = projects.filter((p) => p.featured);
+  const nonFeaturedOnly = projects.filter((p) => !p.featured);
+
+  let homepageProjects: ProjectItem[] = [];
+  if (totalCount <= FEATURED_CAP) {
+    homepageProjects = projects;
+  } else {
+    homepageProjects = [...featuredOnly, ...nonFeaturedOnly].slice(0, FEATURED_CAP);
+  }
+
+  // Determine whether to show the "View All Projects" button
+  const showViewAllButton = isHomepage && totalCount > FEATURED_CAP;
+
+  // Projects array to display based on mode
+  const projectsToDisplay = isHomepage ? homepageProjects : projects;
+
+  // Category list for archive page
+  const defaultCategories = ["Full-Stack", "Frontend", "Backend", "Mobile", "UI/UX", "Open Source"];
+  const dynamicCategories = Array.from(new Set(projects.map((p) => p.category).filter(Boolean))) as string[];
+  
+  const categoryList = ["All"];
+  const combinedCategories = Array.from(new Set([...defaultCategories, ...dynamicCategories]));
+  combinedCategories.forEach((cat) => {
+    if (cat && !categoryList.includes(cat)) categoryList.push(cat);
   });
 
-  const filterOptions = [
-    "All",
-    "Featured",
-    ...Array.from(categoriesSet),
-  ].filter((v, i, a) => a.indexOf(v) === i);
-
-  // Filter projects
-  const filteredProjects = projects.filter((p) => {
+  const filteredProjects = projectsToDisplay.filter((p) => {
+    if (isHomepage) return true;
     if (activeFilter === "All") return true;
     if (activeFilter === "Featured") return p.featured;
-    return p.category?.toLowerCase() === activeFilter.toLowerCase();
+    return (p.category || "").toLowerCase() === activeFilter.toLowerCase();
   });
+
+  const paginatedProjects = isHomepage ? filteredProjects : filteredProjects.slice(0, displayLimit);
+  const hasMore = !isHomepage && filteredProjects.length > displayLimit;
 
   const openDetailModal = (project: ProjectItem) => {
     setSelectedProject(project);
@@ -84,82 +109,92 @@ export default function Projects({ projects }: ProjectsProps) {
   };
 
   return (
-    <section id="projects" className="section relative overflow-hidden bg-[#fafafa] py-16 sm:py-24 lg:py-28">
-      <div className="container max-w-6xl mx-auto">
-        <div className="divider mb-16" />
+    <SectionWrapper id="projects">
+      <section className="section relative overflow-hidden bg-[#fafafa] py-16 sm:py-24 lg:py-28">
+        {/* Background Accent Shapes */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute -top-10 left-1/4 w-96 h-96 rounded-full bg-blue-500/10 blur-3xl" />
+          <div className="absolute -bottom-10 right-1/4 w-96 h-96 rounded-full bg-purple-500/10 blur-3xl" />
+        </div>
 
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
-          className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-4"
-        >
-          <div>
-            <p className="section-label">Work & Portfolio</p>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#111111] tracking-tight">
-              Featured Projects
-            </h2>
-          </div>
-          <p className="text-gray-500 max-w-md font-light text-sm md:text-right">
-            Crafting full-stack applications, scalable systems, and interactive interfaces.
-          </p>
-        </motion.div>
+        <div className="container max-w-6xl mx-auto relative z-10">
+          <div className="divider mb-16" />
 
-        {/* Category Filter Pills */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="flex items-center gap-2 overflow-x-auto pb-4 mb-10 no-scrollbar"
-        >
-          {filterOptions.map((filter) => {
-            const isActive = activeFilter === filter;
-            return (
-              <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
-                className={`relative px-4 py-2 text-xs font-semibold rounded-full transition-all duration-300 whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? "text-white shadow-md shadow-blue-500/20"
-                    : "text-gray-600 bg-white border border-gray-200/80 hover:bg-gray-100 hover:text-gray-900"
-                }`}
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="projectFilterActive"
-                    className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-full z-0"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <span className="relative z-10 flex items-center gap-1.5">
-                  {filter === "Featured" && <Sparkles size={12} className={isActive ? "text-amber-300" : "text-amber-500"} />}
-                  {filter}
-                </span>
-              </button>
-            );
-          })}
-        </motion.div>
+          {/* Section Header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col md:flex-row items-start md:items-end justify-between mb-12 gap-4"
+          >
+            <div>
+              <p className="text-xs font-bold text-[#8B5CF6] tracking-[0.22em] uppercase mb-2">
+                {isHomepage ? "- FEATURED WORK" : "- PORTFOLIO ARCHIVE"}
+              </p>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#111111] tracking-tight">
+                {isHomepage ? "Selected Projects" : "All Projects"}
+              </h2>
+            </div>
+            <p className="text-gray-500 max-w-md font-light text-sm md:text-right">
+              {isHomepage
+                ? "A curated selection of recent full-stack applications, scalable systems, and interactive tools."
+                : "Explore the complete collection of web applications, mobile builds, and open-source work."}
+            </p>
+          </motion.div>
 
-        {/* Projects Grid */}
-        {filteredProjects.length === 0 ? (
-          <div className="py-20 text-center bg-white rounded-3xl border border-gray-100 shadow-xs">
-            <Layers className="mx-auto w-10 h-10 text-gray-300 mb-3" />
-            <h3 className="text-lg font-bold text-gray-700">No projects found</h3>
-            <p className="text-gray-400 text-sm mt-1">Try selecting a different filter category.</p>
-          </div>
-        ) : (
-          <motion.div layout className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AnimatePresence mode="popLayout">
-              {filteredProjects.map((project, idx) => {
-                // First featured project in "All" view spans 2 cols for mosaic effect
-                const isHeroSpan = activeFilter === "All" && idx === 0 && project.featured;
-                const gallery = project.images && project.images.length > 0
-                  ? project.images
-                  : project.coverImageUrl ? [project.coverImageUrl] : [];
-                const coverImage = gallery[0] || project.coverImageUrl;
+          {/* Category Filter Pills (Shown on /projects page or if non-homepage) */}
+          {!isHomepage && (
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="flex items-center gap-2 overflow-x-auto pb-4 mb-10 no-scrollbar"
+            >
+              {categoryList.map((filter) => {
+                const isActive = activeFilter === filter;
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => {
+                      setActiveFilter(filter);
+                      setDisplayLimit(9);
+                    }}
+                    className={`relative px-4 py-2 text-xs font-semibold rounded-full transition-all duration-300 whitespace-nowrap cursor-pointer ${
+                      isActive
+                        ? "text-white shadow-md shadow-blue-500/20"
+                        : "text-gray-600 bg-white border border-gray-200/80 hover:bg-gray-100 hover:text-gray-900"
+                    }`}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="projectFilterActive"
+                        className="absolute inset-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-full z-0"
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10 flex items-center gap-1.5">
+                      {filter === "Featured" && <Sparkles size={12} className={isActive ? "text-amber-300" : "text-amber-500"} />}
+                      {filter}
+                    </span>
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+
+          {/* Projects Grid — Asymmetric Bento Layout */}
+          {filteredProjects.length === 0 ? (
+            <div className="py-20 text-center bg-white rounded-3xl border border-gray-100 shadow-xs">
+              <Layers className="mx-auto w-10 h-10 text-gray-300 mb-3" />
+              <p className="text-gray-500 font-medium text-sm">No projects found in this category.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+              {paginatedProjects.map((project, idx) => {
+                const isHeroSpan = isHomepage ? idx === 0 : idx === 0 && paginatedProjects.length > 2;
+                const coverImage = project.images && project.images.length > 0 ? project.images[0] : project.coverImageUrl;
 
                 const techItems: Array<TechnologyItem | string> =
                   project.technologies && project.technologies.length > 0
@@ -171,20 +206,20 @@ export default function Projects({ projects }: ProjectsProps) {
 
                 return (
                   <motion.div
-                    layout
                     key={project.id}
-                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    transition={{ duration: 0.4, delay: idx * 0.05 }}
+                    layout
+                    initial={{ opacity: 0, scale: 1.03, y: 15 }}
+                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-60px" }}
+                    transition={{ duration: 0.45, delay: idx * 0.06, ease: [0.16, 1, 0.3, 1] }}
                     onClick={() => openDetailModal(project)}
-                    className={`group relative rounded-2xl bg-white border border-blue-500/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(59,130,246,0.12)] hover:border-blue-500/30 transition-all duration-300 cursor-pointer flex flex-col overflow-hidden ${
-                      isHeroSpan ? "lg:col-span-2" : ""
+                    className={`group relative rounded-3xl bg-white/95 border border-blue-500/10 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_45px_rgba(59,130,246,0.14)] hover:border-blue-500/30 backdrop-blur-xs transition-all duration-300 cursor-pointer flex flex-col overflow-hidden hover:-translate-y-1.5 ${
+                      isHeroSpan ? "md:col-span-2 lg:col-span-2" : "col-span-1"
                     }`}
                     style={{ transform: "translateZ(0)" }}
                   >
                     {/* Thumbnail Image Container */}
-                    <div className={`relative overflow-hidden bg-gray-900 ${isHeroSpan ? "h-64 sm:h-72" : "h-52"}`}>
+                    <div className={`relative overflow-hidden bg-slate-950 ${isHeroSpan ? "h-64 sm:h-76" : "h-52"}`}>
                       {coverImage ? (
                         <img
                           src={coverImage}
@@ -224,7 +259,7 @@ export default function Projects({ projects }: ProjectsProps) {
 
                       {/* Accent Featured Badge */}
                       {project.featured && (
-                        <div className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r from-blue-500 via-purple-500 to-orange-400 shadow-md border border-white/20 backdrop-blur-sm">
+                        <div className="absolute top-3.5 left-3.5 z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500 shadow-md border border-white/20 backdrop-blur-sm">
                           <Sparkles size={12} className="text-white fill-white/20 animate-pulse" />
                           Featured
                         </div>
@@ -232,7 +267,7 @@ export default function Projects({ projects }: ProjectsProps) {
 
                       {/* Category Tag */}
                       {project.category && (
-                        <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-800 bg-white/90 border border-gray-200/80 backdrop-blur-md shadow-xs">
+                        <div className="absolute top-3.5 right-3.5 z-10 px-3 py-1 rounded-full text-[10px] font-bold text-gray-800 bg-white/90 border border-gray-200/80 backdrop-blur-md shadow-xs">
                           {project.category}
                         </div>
                       )}
@@ -257,36 +292,32 @@ export default function Projects({ projects }: ProjectsProps) {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="translate-y-2 group-hover:translate-y-0 transition-all duration-300 delay-75 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-gray-900 bg-white/90 border border-white/50 hover:bg-white hover:scale-105 shadow-md"
+                            className="translate-y-2 group-hover:translate-y-0 transition-all duration-300 delay-75 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-white bg-slate-900/90 border border-white/20 hover:bg-slate-900 hover:scale-105 shadow-md"
                           >
-                            <Github size={13} className="text-purple-600" />
+                            <Github size={13} className="text-gray-300" />
                             GitHub
                           </a>
                         )}
                       </div>
                     </div>
 
-                    {/* Card Content Body */}
-                    <div className="p-6 flex-1 flex flex-col justify-between">
+                    {/* Card Content Header */}
+                    <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between">
                       <div>
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <h3 className="text-lg font-bold text-[#111111] group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h3 className="text-xl font-bold text-[#111111] group-hover:text-blue-600 transition-colors tracking-tight">
                             {project.title}
-                            <ArrowRight
-                              size={15}
-                              className="opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0 text-blue-600"
-                            />
                           </h3>
                         </div>
 
-                        <p className="text-sm text-gray-600 leading-relaxed font-light line-clamp-2 mb-5">
+                        <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-2 font-normal mb-5">
                           {project.description}
                         </p>
                       </div>
 
-                      {/* Tech Chips with Shared Technology Icons & Overflow Tooltip */}
-                      <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                        <div className="flex flex-wrap items-center gap-1.5">
+                      {/* Tech Stack Pills & Details Link Footer */}
+                      <div className="pt-4 border-t border-gray-100 flex items-center justify-between gap-2 mt-auto">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           {visibleTechs.map((item, i) => {
                             const name = typeof item === "string" ? item : item.name;
                             const iconKey = typeof item === "object" ? item.iconKey : null;
@@ -295,9 +326,9 @@ export default function Projects({ projects }: ProjectsProps) {
                             return (
                               <span
                                 key={typeof item === "object" ? item.id : `${name}-${i}`}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-gray-700 bg-gray-50 border border-gray-200/80 rounded-full transition-all duration-200 hover:bg-white hover:shadow-xs"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-gray-700 bg-gray-50 border border-gray-200/70"
                               >
-                                <span style={{ color: brandColor }} className="shrink-0">
+                                <span style={{ color: brandColor }}>
                                   {renderIconByKey(iconKey || name, "w-3 h-3")}
                                 </span>
                                 <span>{name}</span>
@@ -305,31 +336,27 @@ export default function Projects({ projects }: ProjectsProps) {
                             );
                           })}
 
-                          {/* Hover-Triggered Tooltip for Overflow Tags */}
                           {overflowTechs.length > 0 && (
                             <div
                               className="relative"
                               onMouseEnter={() => setHoveredOverflowId(project.id)}
                               onMouseLeave={() => setHoveredOverflowId(null)}
                             >
-                              <span className="inline-flex items-center px-2.5 py-1 text-[11px] font-semibold text-blue-600 bg-blue-50 border border-blue-200/60 rounded-full cursor-pointer hover:bg-blue-100">
-                                +{overflowTechs.length} more
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold text-gray-500 bg-gray-100 border border-gray-200 cursor-pointer hover:bg-gray-200 transition-colors">
+                                +{overflowTechs.length}
                               </span>
 
-                              {/* Tooltip Content */}
+                              {/* Hover Popover */}
                               <AnimatePresence>
                                 {hoveredOverflowId === project.id && (
                                   <motion.div
-                                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                                    initial={{ opacity: 0, y: 6, scale: 0.95 }}
                                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                                    exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                                    exit={{ opacity: 0, y: 4, scale: 0.95 }}
                                     transition={{ duration: 0.15 }}
-                                    className="absolute bottom-full left-0 mb-2 z-30 p-3 bg-gray-900 text-white rounded-xl shadow-xl border border-gray-800 min-w-[180px]"
+                                    className="absolute bottom-full left-0 mb-2 z-30 p-2 bg-slate-900 border border-slate-800 rounded-xl shadow-xl whitespace-nowrap pointer-events-none max-w-xs"
                                   >
-                                    <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-2">
-                                      Additional Stack
-                                    </p>
-                                    <div className="flex flex-wrap gap-1.5">
+                                    <div className="flex flex-wrap gap-1.5 max-w-[200px]">
                                       {overflowTechs.map((item, i) => {
                                         const name = typeof item === "string" ? item : item.name;
                                         const iconKey = typeof item === "object" ? item.iconKey : null;
@@ -363,26 +390,53 @@ export default function Projects({ projects }: ProjectsProps) {
                   </motion.div>
                 );
               })}
-            </AnimatePresence>
-          </motion.div>
-        )}
+            </div>
+          )}
 
-        {/* View All Link */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-          className="text-center mt-14"
-        >
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer">
-            <Button variant="secondary" size="lg" className="rounded-full shadow-xs">
-              <Github size={16} />
-              Explore More Repositories on GitHub
-            </Button>
-          </a>
-        </motion.div>
+        {/* Dynamic CTA Footer Section — Rendered conditionally */}
+        {(showViewAllButton || (!isHomepage && hasMore)) && (
+          <div className="text-center mt-14 flex flex-col sm:flex-row items-center justify-center gap-4 relative z-20">
+            {isHomepage ? (
+              showViewAllButton && (
+                <Link href="/projects" className="inline-block">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="rounded-full shadow-md bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-bold px-8 py-3.5 hover:shadow-lg hover:scale-105 transition-all cursor-pointer flex items-center gap-2"
+                  >
+                    <span>View All Projects ({totalCount})</span>
+                    <ArrowRight size={18} />
+                  </Button>
+                </Link>
+              )
+            ) : (
+              <>
+                {hasMore && (
+                  <Button
+                    onClick={() => setDisplayLimit((prev) => prev + 6)}
+                    variant="primary"
+                    size="lg"
+                    className="rounded-full shadow-md bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-bold px-8 py-3.5 hover:shadow-lg hover:scale-105 transition-all cursor-pointer"
+                  >
+                    <span>Load More Projects</span>
+                  </Button>
+                )}
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="inline-block">
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="rounded-full shadow-2xs border border-gray-200 bg-white text-gray-800 hover:bg-gray-50 px-6 py-3.5 flex items-center gap-2 cursor-pointer"
+                  >
+                    <Github size={16} />
+                    <span>Explore More on GitHub</span>
+                  </Button>
+                </a>
+              </>
+            )}
+          </div>
+        )}
       </div>
+      </section>
 
       {/* DEDICATED PROJECT DETAIL MODAL */}
       <AnimatePresence>
@@ -444,7 +498,7 @@ export default function Projects({ projects }: ProjectsProps) {
                                   : "border-gray-200 opacity-60 hover:opacity-100"
                               }`}
                             >
-                              <img src={imgUrl} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                              <Image src={imgUrl} alt={`Thumbnail ${idx}`} fill className="object-cover" sizes="80px" />
                             </button>
                           ))}
                         </div>
@@ -585,6 +639,6 @@ export default function Projects({ projects }: ProjectsProps) {
           </div>
         )}
       </AnimatePresence>
-    </section>
+    </SectionWrapper>
   );
 }

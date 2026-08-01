@@ -21,6 +21,7 @@ const schema = z.object({
   github: z.string().optional(),
   linkedin: z.string().optional(),
   twitter: z.string().optional(),
+  whatsapp: z.string().optional(),
   email: z.string().email("Invalid email").or(z.literal("")).optional(),
   stats: z.array(z.object({
     label: z.string().min(1, "Label is required"),
@@ -61,6 +62,7 @@ export default function AdminProfileClient() {
             github: links.github ?? "",
             linkedin: links.linkedin ?? "",
             twitter: links.twitter ?? "",
+            whatsapp: links.whatsapp ?? "",
             email: links.email ?? "",
             stats: data.stats && Array.isArray(data.stats) ? data.stats : [],
           });
@@ -71,13 +73,13 @@ export default function AdminProfileClient() {
 
   const onSubmit = async (data: FormData) => {
     setSaving(true);
-    const { github, linkedin, twitter, email: contactEmail, ...rest } = data;
+    const { github, linkedin, twitter, whatsapp, email: contactEmail, ...rest } = data;
     await fetch("/api/profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...rest,
-        socialLinks: { github, linkedin, twitter, email: contactEmail },
+        socialLinks: { github, linkedin, twitter, whatsapp, email: contactEmail },
       }),
     });
     setSaving(false);
@@ -189,6 +191,10 @@ export default function AdminProfileClient() {
             <div>
               <Label htmlFor="prof-twitter">Twitter URL</Label>
               <Input id="prof-twitter" placeholder="https://twitter.com/..." {...register("twitter")} />
+            </div>
+            <div>
+              <Label htmlFor="prof-whatsapp">WhatsApp Link / Number</Label>
+              <Input id="prof-whatsapp" placeholder="https://wa.me/... or +1234567890" {...register("whatsapp")} />
             </div>
             <div>
               <Label htmlFor="prof-email">Contact Email</Label>

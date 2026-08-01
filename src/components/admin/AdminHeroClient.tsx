@@ -43,7 +43,33 @@ export default function AdminHeroClient({
   initialData: any;
   masterTechnologies: Technology[];
 }) {
-  const [formData, setFormData] = useState<any>(initialData || {});
+  const defaultSubtext = "Full-stack developer passionate about crafting clean, performant, and beautiful web applications. Turning complex problems into elegant solutions.";
+
+  const [formData, setFormData] = useState<any>(() => {
+    const data = {
+      heroGreeting: "Hi, I'm",
+      heroName: "Shivam Zaware",
+      heroHeadlineLine1: "I build",
+      heroHeadlineLine2: "digital experiences.",
+      headlineSize: "md",
+      heroSubtext: defaultSubtext,
+      subtextSize: "md",
+      availabilityStatus: "Available for new opportunities",
+      isAvailable: true,
+      primaryCtaLabel: "View My Work",
+      primaryCtaLink: "#projects",
+      secondaryCtaLabel: "Get in Touch",
+      secondaryCtaLink: "#contact",
+      heroResumeLabel: "Download CV",
+      ...(initialData || {}),
+    };
+    if (!data.heroSubtext?.trim()) data.heroSubtext = defaultSubtext;
+    if (!data.heroGreeting?.trim()) data.heroGreeting = "Hi, I'm";
+    if (!data.heroName?.trim()) data.heroName = "Shivam Zaware";
+    if (!data.heroHeadlineLine1?.trim()) data.heroHeadlineLine1 = "I build";
+    if (!data.heroHeadlineLine2?.trim()) data.heroHeadlineLine2 = "digital experiences.";
+    return data;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -332,7 +358,81 @@ export default function AdminHeroClient({
                     placeholder="Full-stack developer passionate about crafting clean, performant, and beautiful web applications..."
                     className="w-full text-xs p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
-                  <p className="text-[11px] text-gray-400 mt-1">Recommended: 120 - 180 characters for optimal readability.</p>
+                  <p className="text-[11px] text-gray-400 mt-1 mb-4">Recommended: 120 - 180 characters for optimal readability.</p>
+                </div>
+
+                {/* Font Size Preset Selectors */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-gray-50/80 border border-gray-200">
+                  {/* Headline Size Control */}
+                  <div>
+                    <label className="text-xs font-bold text-gray-800 block mb-1 flex items-center justify-between">
+                      <span>Headline Size:</span>
+                      <span className="text-[10px] text-[#8B5CF6] font-mono uppercase font-extrabold">
+                        {formData.headlineSize || "md"}
+                      </span>
+                    </label>
+                    <div className="grid grid-cols-4 gap-1 p-1 bg-white rounded-xl border border-gray-200 shadow-2xs">
+                      {[
+                        { key: "sm", label: "S" },
+                        { key: "md", label: "M" },
+                        { key: "lg", label: "L" },
+                        { key: "xl", label: "XL" },
+                      ].map((opt) => {
+                        const active = (formData.headlineSize || "md") === opt.key;
+                        return (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => setFormData((prev: any) => ({ ...prev, headlineSize: opt.key }))}
+                            className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                              active
+                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xs"
+                                : "text-gray-600 hover:bg-gray-100"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Subtext Size Control */}
+                  <div>
+                    <label className="text-xs font-bold text-gray-800 block mb-1 flex items-center justify-between">
+                      <span>Subtext Size:</span>
+                      <span className="text-[10px] text-[#8B5CF6] font-mono uppercase font-extrabold">
+                        {formData.subtextSize || "md"}
+                      </span>
+                    </label>
+                    <div className="grid grid-cols-3 gap-1 p-1 bg-white rounded-xl border border-gray-200 shadow-2xs">
+                      {[
+                        { key: "sm", label: "S" },
+                        { key: "md", label: "M" },
+                        { key: "lg", label: "L" },
+                      ].map((opt) => {
+                        const active = (formData.subtextSize || "md") === opt.key;
+                        return (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => setFormData((prev: any) => ({ ...prev, subtextSize: opt.key }))}
+                            className={`py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                              active
+                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xs"
+                                : "text-gray-600 hover:bg-gray-100"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <p className="sm:col-span-2 text-[11px] text-gray-500 font-light mt-1">
+                    💡 <em>Adjust if longer text feels cramped, or shorter text feels too small. Uses responsive clamp() scaling.</em>
+                  </p>
                 </div>
               </div>
             </div>
@@ -629,7 +729,17 @@ export default function AdminHeroClient({
                 <span className="block text-xs font-bold text-gray-500 uppercase tracking-wider">
                   {formData.heroGreeting || "Hi, I'm"} {formData.heroName || "Alex Morgan"}
                 </span>
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 leading-tight">
+                <h2
+                  className={`font-black text-gray-900 leading-tight transition-all ${
+                    (formData.headlineSize || "md") === "sm"
+                      ? "text-lg sm:text-xl"
+                      : (formData.headlineSize || "md") === "lg"
+                      ? "text-2xl sm:text-3xl"
+                      : (formData.headlineSize || "md") === "xl"
+                      ? "text-3xl sm:text-4xl"
+                      : "text-xl sm:text-2xl"
+                  }`}
+                >
                   {formData.heroHeadlineLine1 || "I build"}{" "}
                   <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-rose-500 bg-clip-text text-transparent">
                     {formData.heroHeadlineLine2 || "digital experiences."}
@@ -638,7 +748,15 @@ export default function AdminHeroClient({
               </div>
 
               {/* Subtext */}
-              <p className="text-xs text-gray-500 leading-relaxed font-light line-clamp-3">
+              <p
+                className={`text-gray-500 leading-relaxed font-light line-clamp-3 transition-all ${
+                  (formData.subtextSize || "md") === "sm"
+                    ? "text-[11px]"
+                    : (formData.subtextSize || "md") === "lg"
+                    ? "text-sm sm:text-base"
+                    : "text-xs sm:text-sm"
+                }`}
+              >
                 {formData.heroSubtext || "Full-stack developer passionate about crafting clean applications."}
               </p>
 

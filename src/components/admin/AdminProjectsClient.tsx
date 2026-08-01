@@ -378,17 +378,34 @@ export default function AdminProjectsClient() {
       t.category.toLowerCase().includes(techSearchQuery.toLowerCase())
   );
 
+  const featuredCount = projects.filter((p) => p.featured).length;
+
   return (
     <div className="p-8 max-w-6xl">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-[#111111]">Projects</h1>
-          <p className="text-[#9ca3af] text-sm mt-1">{projects.length} showcase projects</p>
+          <p className="text-[#9ca3af] text-sm mt-1">
+            {projects.length} showcase projects ({featuredCount} featured)
+          </p>
         </div>
         <Button onClick={openCreate} id="admin-add-project-btn">
           <Plus size={16} /> Add Project
         </Button>
       </div>
+
+      {/* Gentle warning banner if more than 6 featured projects */}
+      {featuredCount > 6 && (
+        <div className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-sm font-medium mb-6">
+          <Star className="text-amber-500 shrink-0 fill-amber-500" size={18} />
+          <span>
+            <strong>Homepage Tip:</strong> You have <strong>{featuredCount} projects</strong> marked as Featured. The homepage typically displays up to 6 featured projects. All projects remain accessible on the{" "}
+            <Link href="/projects" target="_blank" className="underline font-bold text-amber-950">
+              All Projects page (/projects)
+            </Link>.
+          </span>
+        </div>
+      )}
 
       {/* Projects Table */}
       <div className="bg-white rounded-2xl border border-[rgba(0,0,0,0.07)] overflow-hidden shadow-xs">

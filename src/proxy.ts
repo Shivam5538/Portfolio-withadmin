@@ -4,7 +4,7 @@ import { getToken } from "next-auth/jwt";
 
 const secret = process.env.NEXTAUTH_SECRET ?? "dev-secret-key-changed-to-force-logout-123";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Normalize trailing slash: '/admin/' -> '/admin'
@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 4. Protect all other /admin routes (/admin/dashboard, /admin/projects, etc.)
+  // 3. Protect all other /admin routes (/admin/dashboard, /admin/projects, etc.)
   if (cleanPath.startsWith("/admin")) {
     const token = await getToken({ req: request, secret });
     if (!token) {

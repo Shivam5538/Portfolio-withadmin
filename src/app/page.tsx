@@ -39,6 +39,8 @@ async function getData() {
   }
 }
 
+import { SmoothScrollProvider, ScrollProgressBar } from "@/components/providers/SmoothScrollProvider";
+
 export default async function HomePage() {
   const { profile, siteContent, experience, projects, activeTemplateId, activeStatsTemplate, slotAssignments } = await getData();
 
@@ -96,7 +98,8 @@ export default async function HomePage() {
     updatedAt: siteContent.updatedAt.toISOString(),
     stats: rawStatsItems,
     heroTechMarquee: JSON.stringify(resolvedHeroTechs),
-  } : { activeStatsTemplate: effectiveStatsTemplate };
+    socialLinks: profile?.socialLinks || "[]",
+  } : { activeStatsTemplate: effectiveStatsTemplate, socialLinks: profile?.socialLinks || "[]" };
 
   // Serialize dates for client components and parse JSON strings
   const serializedExperience = experience.map((e) => {
@@ -157,7 +160,8 @@ export default async function HomePage() {
   }));
 
   return (
-    <>
+    <SmoothScrollProvider>
+      <ScrollProgressBar />
       <Navbar siteContent={serializedSiteContent} profile={serializedProfile} />
       <main>
         <Hero siteContent={serializedSiteContent} />
@@ -165,10 +169,10 @@ export default async function HomePage() {
         <Stats siteContent={serializedSiteContent} activeStatsTemplate={effectiveStatsTemplate} />
         <Skills activeTemplateId={activeTemplateId} slotAssignments={serializedAssignments} />
         <Experience experience={serializedExperience} />
-        <Projects projects={serializedProjects} />
+        <Projects projects={serializedProjects} isHomepage={true} />
         <Contact siteContent={serializedSiteContent} />
       </main>
       <Footer siteContent={serializedSiteContent} />
-    </>
+    </SmoothScrollProvider>
   );
 }

@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Profile {
@@ -39,6 +40,10 @@ model Project {
   order         Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([order])
+  @@index([featured])
+  @@index([featured, order])
 }
 
 model Skill {
@@ -93,6 +98,8 @@ model Experience {
   order       Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([order])
 }
 
 model Message {
@@ -103,6 +110,9 @@ model Message {
   message   String   
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([read])
 }
 
 model AdminUser {
@@ -127,7 +137,9 @@ model SiteContent {
   heroName             String   @default("Alex Morgan")
   heroHeadlineLine1    String   @default("I build")
   heroHeadlineLine2    String   @default("digital experiences.")
+  headlineSize         String   @default("md") // "sm" | "md" | "lg" | "xl"
   heroSubtext          String   @default("Full-stack developer passionate about crafting clean, performant, and beautiful web applications. Turning complex problems into elegant solutions.")
+  subtextSize          String   @default("md") // "sm" | "md" | "lg"
   resumeUrl            String?  @default("#")
   primaryCtaLabel      String   @default("View My Work")
   primaryCtaLink       String   @default("#projects")
@@ -173,6 +185,7 @@ model SiteContent {
   githubUrl            String?
   linkedinUrl          String?
   twitterUrl           String?
+  whatsappUrl          String?
   email                String?
   footerText           String   @default("Alex Morgan")
   footerCopyright      String   @default("All rights reserved.")
@@ -197,3 +210,16 @@ model MediaFile {
   updatedAt DateTime @updatedAt
 }
 
+model ActivityLog {
+  id          String   @id @default(cuid())
+  section     String   // "Hero" | "About" | "Contact" | "Footer" | "Project" | "Experience" | "Skill" | "Technology" | "Stats"
+  entityId    String?  // nullable — record ID for multi-row sections (Project, Experience, Skill, Technology)
+  entityLabel String   // human-readable label, e.g. "Project: E-Commerce Platform"
+  action      String   // "create" | "update" | "delete"
+  oldValue    Json?    // full record snapshot before the change; null for create
+  newValue    Json?    // full record snapshot after the change; null for delete
+  createdAt   DateTime @default(now())
+
+  @@index([section])
+  @@index([createdAt])
+}

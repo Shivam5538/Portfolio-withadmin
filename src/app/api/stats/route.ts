@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { logActivity } from "@/lib/activityLog";
 
 export async function GET() {
   try {
@@ -54,9 +55,11 @@ export async function PUT(request: Request) {
     };
     const stringifiedStats = JSON.stringify(statsPayload);
 
+    const existingContent = await prisma.siteContent.findFirst();
+    const oldStatsSnapshot = existingContent?.stats ? JSON.parse(existingContent.stats) : null;
+
     // 1. Update SiteContent stats JSON payload containing items and activeStatsTemplate
     try {
-      const existingContent = await prisma.siteContent.findFirst();
       if (existingContent) {
         await prisma.siteContent.update({
           where: { id: existingContent.id },
@@ -98,6 +101,15 @@ export async function PUT(request: Request) {
     } catch (revalidateErr) {
       console.warn("revalidatePath warning:", revalidateErr);
     }
+
+    await logActivity({
+      section: "Stats",
+      entityId: existingContent?.id || null,
+      entityLabel: "Stats Configuration",
+      action: "update",
+      oldValue: oldStatsSnapshot,
+      newValue: statsPayload,
+    });
 
     return NextResponse.json({
       success: true,

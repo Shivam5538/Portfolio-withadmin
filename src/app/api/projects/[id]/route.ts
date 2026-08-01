@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { logActivity } from "@/lib/activityLog";
 
 function safeParseJSON(str: string | null | undefined, fallback: any = []) {
   if (!str) return fallback;
@@ -70,6 +71,8 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
+    const oldProject = await prisma.project.findUnique({ where: { id } });
+
     const dataToSave = extractProjectData(body);
     let project;
 
@@ -79,7 +82,6 @@ export async function PUT(
         data: dataToSave,
       });
     } catch (firstErr) {
-      // Fallback if dev server's active Prisma Client has not yet reloaded new schema fields
       console.warn("Retrying project update with core fields only:", firstErr);
       delete dataToSave.category;
       delete dataToSave.images;
@@ -95,6 +97,15 @@ export async function PUT(
 
     revalidatePath("/");
     revalidatePath("/projects/[slug]", "page");
+
+    await logActivity({
+      section: "Project",
+      entityId: project.id,
+      entityLabel: `Project: ${project.title}`,
+      action: "update",
+      oldValue: oldProject,
+      newValue: project,
+    });
 
     return NextResponse.json({
       ...project,
@@ -113,12 +124,27 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const oldProject = await prisma.project.findUnique({ where: { id } });
+
     await prisma.project.delete({ where: { id } });
     revalidatePath("/");
     revalidatePath("/projects/[slug]", "page");
+
+    if (oldProject) {
+      await logActivity({
+        section: "Project",
+        entityId: oldProject.id,
+        entityLabel: `Project: ${oldProject.title}`,
+        action: "delete",
+        oldValue: oldProject,
+        newValue: null,
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("DELETE /api/projects/[id] error:", err);
     return NextResponse.json({ error: "Failed to delete project" }, { status: 500 });
   }
 }
+

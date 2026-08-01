@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronRight,
   BarChart3,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/admin/experience", label: "Experience", icon: Briefcase },
   { href: "/admin/stats", label: "Stats", icon: BarChart3 },
   { href: "/admin/profile", label: "Profile", icon: User },
+  { href: "/admin/activity", label: "Activity Log", icon: History },
   { href: "/admin/settings", label: "Settings", icon: Settings },
   { href: "/admin/files", label: "Files", icon: FolderOpen },
   { href: "/admin/messages", label: "Messages", icon: MessageSquare },

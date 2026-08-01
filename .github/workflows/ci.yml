@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  lint-and-build:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+
+    env:
+      # Minimal dummy env vars so the build doesn't crash at import time.
+      # These are NOT real secrets — they're placeholders for the build check only.
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/portfolio_ci"
+      NEXTAUTH_SECRET: "ci-secret-placeholder-not-a-real-secret"
+      NEXTAUTH_URL: "http://localhost:3000"
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+      SUPABASE_URL: "https://placeholder.supabase.co"
+      SUPABASE_SERVICE_ROLE_KEY: "placeholder-service-role-key"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Build (production)
+        run: npm run build

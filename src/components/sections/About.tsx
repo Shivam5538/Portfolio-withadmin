@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Download, ArrowRight, User, Sparkles } from "lucide-react";
+import { SectionWrapper } from "@/components/ui/SectionWrapper";
 
 interface Profile {
   name?: string;
@@ -115,29 +117,23 @@ export default function About({ profile, siteContent }: AboutProps) {
   const accentColors = ["#4F7DFB", "#8B5CF6", "#F0653E", "#10B981"];
 
   return (
-    <section
-      ref={sectionRef}
-      id="about"
-      onMouseMove={handleMouseMove}
-      className="relative overflow-hidden bg-white text-[#111111] py-16 sm:py-24 lg:py-28 px-6 sm:px-8 select-none"
-    >
-      {/* 3 Asymmetric Background Soft Gradient Blobs */}
-      <div
-        className="absolute top-10 left-10 w-[500px] h-[500px] rounded-full pointer-events-none z-0 opacity-15 blur-[120px] transition-transform duration-700 ease-out"
-        style={{
-          background: "radial-gradient(circle, #4F7DFB 0%, transparent 70%)",
-          transform: `translate(${mousePos.x * 0.02}px, ${mousePos.y * 0.02}px)`,
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="absolute bottom-10 right-10 w-[550px] h-[550px] rounded-full pointer-events-none z-0 opacity-15 blur-[120px] transition-transform duration-700 ease-out"
-        style={{
-          background: "radial-gradient(circle, #8B5CF6 0%, transparent 70%)",
-          transform: `translate(${mousePos.x * -0.025}px, ${mousePos.y * -0.025}px)`,
-        }}
-        aria-hidden="true"
-      />
+    <SectionWrapper id="about">
+      <section
+        ref={sectionRef}
+        onMouseMove={handleMouseMove}
+        className="relative overflow-hidden bg-white text-[#111111] py-16 sm:py-24 lg:py-28 px-6 sm:px-8 select-none"
+      >
+        {/* Background Soft Gradient Blobs */}
+        <div
+          className="absolute top-10 left-10 w-[500px] h-[500px] rounded-full pointer-events-none z-0 opacity-15 blur-[120px]"
+          style={{ background: "radial-gradient(circle, #4F7DFB 0%, transparent 70%)" }}
+          aria-hidden="true"
+        />
+        <div
+          className="absolute bottom-10 right-10 w-[550px] h-[550px] rounded-full pointer-events-none z-0 opacity-15 blur-[120px]"
+          style={{ background: "radial-gradient(circle, #8B5CF6 0%, transparent 70%)" }}
+          aria-hidden="true"
+        />
       <div
         className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[450px] h-[450px] rounded-full pointer-events-none z-0 opacity-12 blur-[110px] transition-transform duration-700 ease-out"
         style={{
@@ -316,7 +312,7 @@ export default function About({ profile, siteContent }: AboutProps) {
             className="relative w-12 h-12 rounded-full overflow-hidden border border-gray-200 shadow-sm shrink-0 transition-transform duration-200"
           >
             {avatarUrl ? (
-              <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+              <Image src={avatarUrl} alt={name} fill className="object-cover" sizes="48px" />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center text-gray-400">
                 <User size={22} />
@@ -370,5 +366,6 @@ export default function About({ profile, siteContent }: AboutProps) {
         </motion.div>
       </div>
     </section>
+    </SectionWrapper>
   );
 }

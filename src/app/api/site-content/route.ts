@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { findAutoIcon } from "@/lib/iconStore";
+import { logActivity } from "@/lib/activityLog";
 
 const ALLOWED_SITE_CONTENT_FIELDS = new Set([
   "availabilityStatus",
@@ -9,7 +10,9 @@ const ALLOWED_SITE_CONTENT_FIELDS = new Set([
   "heroName",
   "heroHeadlineLine1",
   "heroHeadlineLine2",
+  "headlineSize",
   "heroSubtext",
+  "subtextSize",
   "resumeUrl",
   "primaryCtaLabel",
   "primaryCtaLink",
@@ -41,6 +44,7 @@ const ALLOWED_SITE_CONTENT_FIELDS = new Set([
   "githubUrl",
   "linkedinUrl",
   "twitterUrl",
+  "whatsappUrl",
   "email",
   "footerText",
   "footerCopyright",
@@ -257,6 +261,7 @@ export async function PUT(request: Request) {
         "githubUrl",
         "linkedinUrl",
         "twitterUrl",
+        "whatsappUrl",
         "email",
       ];
       const fallbackData: Record<string, any> = {};
@@ -276,6 +281,33 @@ export async function PUT(request: Request) {
     }
 
     const { ids, technologies } = await resolveAndMigrateCoreTechs(content.coreTechs);
+
+    // Determine affected section(s) for clear ActivityLog entries
+    const keys = Object.keys(sanitizedData);
+    const affectedSections = new Set<string>();
+    for (const key of keys) {
+      if (key.startsWith("hero") || key === "availabilityStatus" || key === "isAvailable" || key.startsWith("primaryCta") || key.startsWith("secondaryCta") || key === "resumeUrl") {
+        affectedSections.add("Hero");
+      } else if (key.startsWith("about") || key.startsWith("funFact") || key.startsWith("resumeCard") || key === "coreTechs") {
+        affectedSections.add("About Me");
+      } else if (key.startsWith("contact")) {
+        affectedSections.add("Contact");
+      } else if (key.startsWith("footer") || key === "githubUrl" || key === "linkedinUrl" || key === "twitterUrl" || key === "whatsappUrl" || key === "email") {
+        affectedSections.add("Footer");
+      }
+    }
+    if (affectedSections.size === 0) affectedSections.add("Site Content");
+
+    for (const sec of Array.from(affectedSections)) {
+      await logActivity({
+        section: sec,
+        entityId: content.id,
+        entityLabel: `Site Content: ${sec}`,
+        action: existing ? "update" : "create",
+        oldValue: existing,
+        newValue: content,
+      });
+    }
 
     return NextResponse.json({
       ...content,

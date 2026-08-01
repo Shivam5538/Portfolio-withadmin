@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
+import { logActivity } from "@/lib/activityLog";
+
 function safeParseJSON(str: string | null | undefined, fallback: any = []) {
   if (!str) return fallback;
   try {
@@ -77,6 +79,15 @@ export async function POST(request: Request) {
 
     revalidatePath("/");
     revalidatePath("/projects/[slug]", "page");
+
+    await logActivity({
+      section: "Project",
+      entityId: project.id,
+      entityLabel: `Project: ${project.title}`,
+      action: "create",
+      oldValue: null,
+      newValue: project,
+    });
 
     return NextResponse.json(
       {

@@ -68,7 +68,7 @@ interface HeroProps {
 export default function Hero({ siteContent }: HeroProps) {
   const shouldReduceMotion = useReducedMotion();
   
-  const content = siteContent || {
+  const defaultHeroContent = {
     availabilityStatus: "Available for new opportunities",
     isAvailable: true,
     heroGreeting: "Hi, I'm",
@@ -81,6 +81,21 @@ export default function Hero({ siteContent }: HeroProps) {
     secondaryCtaLabel: "Get in Touch",
     secondaryCtaLink: "#contact",
     heroTechMarquee: JSON.stringify(["React", "Next.js", "TypeScript", "Node.js", "PostgreSQL", "GraphQL"]),
+  };
+
+  const content = {
+    ...defaultHeroContent,
+    ...siteContent,
+    heroGreeting: siteContent?.heroGreeting?.trim() || defaultHeroContent.heroGreeting,
+    heroName: siteContent?.heroName?.trim() || defaultHeroContent.heroName,
+    heroHeadlineLine1: siteContent?.heroHeadlineLine1?.trim() || defaultHeroContent.heroHeadlineLine1,
+    heroHeadlineLine2: siteContent?.heroHeadlineLine2?.trim() || defaultHeroContent.heroHeadlineLine2,
+    heroSubtext: siteContent?.heroSubtext?.trim() || defaultHeroContent.heroSubtext,
+    availabilityStatus: siteContent?.availabilityStatus?.trim() || defaultHeroContent.availabilityStatus,
+    primaryCtaLabel: siteContent?.primaryCtaLabel?.trim() || defaultHeroContent.primaryCtaLabel,
+    primaryCtaLink: siteContent?.primaryCtaLink?.trim() || defaultHeroContent.primaryCtaLink,
+    secondaryCtaLabel: siteContent?.secondaryCtaLabel?.trim() || defaultHeroContent.secondaryCtaLabel,
+    secondaryCtaLink: siteContent?.secondaryCtaLink?.trim() || defaultHeroContent.secondaryCtaLink,
   };
 
   let rawMarquee: any[] = ["React", "Next.js", "TypeScript", "Node.js", "PostgreSQL", "GraphQL"];
@@ -123,34 +138,59 @@ export default function Hero({ siteContent }: HeroProps) {
         .animate-hero-marquee {
           animation: hero-marquee 25s linear infinite;
         }
+        @keyframes aurora-drift-1 {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          33% { transform: translate(45px, -35px) scale(1.08); }
+          66% { transform: translate(-30px, 25px) scale(0.95); }
+        }
+        @keyframes aurora-drift-2 {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          40% { transform: translate(-40px, 40px) scale(0.93); }
+          75% { transform: translate(25px, -30px) scale(1.10); }
+        }
+        @keyframes aurora-drift-3 {
+          0%, 100% { transform: translate(0px, 0px) scale(1); }
+          50% { transform: translate(35px, 30px) scale(1.06); }
+        }
+        .animate-aurora-1 {
+          animation: aurora-drift-1 22s ease-in-out infinite;
+        }
+        .animate-aurora-2 {
+          animation: aurora-drift-2 18s ease-in-out infinite;
+        }
+        .animate-aurora-3 {
+          animation: aurora-drift-3 26s ease-in-out infinite;
+        }
       `}} />
 
-      {/* Animated particle canvas */}
+      {/* Aurora Gradient Mesh Layer (Large, soft blurred ambient color blobs) */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
+        {/* Blob 1: Accent Blue (Upper-Left) */}
+        <div
+          className={`absolute -top-10 -left-10 w-[650px] h-[650px] rounded-full bg-gradient-to-tr from-blue-600/20 to-indigo-500/15 blur-[110px] ${
+            !shouldReduceMotion ? "animate-aurora-1" : ""
+          }`}
+        />
+        {/* Blob 2: Vibrant Purple (Center-Right) */}
+        <div
+          className={`absolute top-1/4 -right-20 w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-purple-600/20 to-indigo-600/15 blur-[120px] ${
+            !shouldReduceMotion ? "animate-aurora-2" : ""
+          }`}
+        />
+        {/* Blob 3: Soft Coral/Amber (Lower-Center/Left) */}
+        <div
+          className={`absolute bottom-0 left-1/4 w-[550px] h-[550px] rounded-full bg-gradient-to-tr from-amber-500/16 to-orange-500/12 blur-[100px] ${
+            !shouldReduceMotion ? "animate-aurora-3" : ""
+          }`}
+        />
+      </div>
+
+      {/* Restrained Interactive Dot Grid canvas */}
       {!shouldReduceMotion && <HeroCanvas />}
 
-      {/* Asymmetric large background blobs for depth */}
-      <div
-        aria-hidden="true"
-        className="absolute top-1/4 right-0 w-[800px] h-[800px] rounded-full opacity-[0.07] pointer-events-none z-0"
-        style={{
-          background: "radial-gradient(circle, rgba(59,130,246,1) 0%, transparent 60%)",
-          filter: "blur(100px)",
-          transform: "translate(30%, -20%)",
-        }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full opacity-[0.05] pointer-events-none z-0"
-        style={{
-          background: "radial-gradient(circle, rgba(139,92,246,1) 0%, transparent 60%)",
-          filter: "blur(100px)",
-          transform: "translate(20%, 30%)",
-        }}
-      />
-
-      {/* Faint Noise Overlay */}
+      {/* Faint Noise Texture Overlay */}
       <div 
-        className="absolute inset-0 pointer-events-none z-0 opacity-[0.02]" 
+        className="absolute inset-0 pointer-events-none z-0 opacity-[0.025]" 
         style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}
       />
 
@@ -178,31 +218,68 @@ export default function Hero({ siteContent }: HeroProps) {
             </span>
           </motion.div>
 
-          {/* Headline with animated gradient and back-glow */}
-          <motion.div variants={itemVariants} className="relative mb-6">
-            {/* Soft text glow blob */}
-            <div className="absolute top-1/2 left-1/4 w-[250px] h-[150px] bg-gradient-to-r from-blue-400/20 to-purple-400/20 blur-[60px] -translate-y-1/2 -z-10 rounded-full" />
-            
-            <h1 className="font-bold leading-[1.05] tracking-tight text-[#111111]">
-              <span className="block text-[clamp(2rem,4vw,3rem)] text-gray-800 font-extrabold mb-1">
-                {content.heroGreeting} {content.heroName}
-              </span>
-              <span className="block text-[clamp(3rem,8vw,6rem)]">
-                {content.heroHeadlineLine1}{" "}
-                <span className="animate-text-gradient bg-gradient-to-r from-blue-600 via-purple-600 to-coral-500 bg-clip-text text-transparent">
-                  {content.heroHeadlineLine2}
-                </span>
-              </span>
-            </h1>
-          </motion.div>
+          {/* Preset size maps with responsive clamp() values */}
+          {(() => {
+            const headlinePresets: Record<string, string> = {
+              sm: "clamp(2.25rem, 5.5vw, 4rem)",
+              md: "clamp(3rem, 7.5vw, 5.5rem)",
+              lg: "clamp(3.5rem, 9vw, 6.5rem)",
+              xl: "clamp(4rem, 11vw, 7.5rem)",
+            };
+            const subtextPresets: Record<string, string> = {
+              sm: "clamp(0.95rem, 1.25vw, 1.1rem)",
+              md: "clamp(1.1rem, 1.6vw, 1.35rem)",
+              lg: "clamp(1.25rem, 2vw, 1.6rem)",
+            };
 
-          {/* Sub-headline */}
-          <motion.p
-            variants={itemVariants}
-            className="text-lg sm:text-xl text-[#6b7280] max-w-xl mb-10 leading-relaxed font-light"
-          >
-            {content.heroSubtext}
-          </motion.p>
+            // Auto-fit safeguard if text is unusually long
+            const rawHeadlineSize = content.headlineSize || "md";
+            const combinedLen = ((content.heroHeadlineLine1 || "") + " " + (content.heroHeadlineLine2 || "")).length;
+            let effectiveHeadlineKey = rawHeadlineSize;
+            if (combinedLen > 36 && rawHeadlineSize === "lg") effectiveHeadlineKey = "md";
+            if (combinedLen > 32 && rawHeadlineSize === "md") effectiveHeadlineKey = "sm";
+
+            const headlineClamp = headlinePresets[effectiveHeadlineKey] || headlinePresets.md;
+
+            const rawSubtextSize = content.subtextSize || "md";
+            const subtextLen = (content.heroSubtext || "").length;
+            let effectiveSubtextKey = rawSubtextSize;
+            if (subtextLen > 220 && rawSubtextSize === "lg") effectiveSubtextKey = "md";
+            if (subtextLen > 260 && rawSubtextSize === "md") effectiveSubtextKey = "sm";
+
+            const subtextClamp = subtextPresets[effectiveSubtextKey] || subtextPresets.md;
+
+            return (
+              <>
+                {/* Headline with animated gradient and back-glow */}
+                <motion.div variants={itemVariants} className="relative mb-6">
+                  {/* Soft text glow blob */}
+                  <div className="absolute top-1/2 left-1/4 w-[250px] h-[150px] bg-gradient-to-r from-blue-400/20 to-purple-400/20 blur-[60px] -translate-y-1/2 -z-10 rounded-full" />
+
+                  <h1 className="font-bold leading-[1.05] tracking-tight text-[#111111]">
+                    <span className="block text-[clamp(1.5rem,3.5vw,2.5rem)] text-gray-800 font-extrabold mb-1">
+                      {content.heroGreeting} {content.heroName}
+                    </span>
+                    <span className="block" style={{ fontSize: headlineClamp }}>
+                      {content.heroHeadlineLine1}{" "}
+                      <span className="animate-text-gradient bg-gradient-to-r from-blue-600 via-purple-600 to-coral-500 bg-clip-text text-transparent">
+                        {content.heroHeadlineLine2}
+                      </span>
+                    </span>
+                  </h1>
+                </motion.div>
+
+                {/* Sub-headline */}
+                <motion.p
+                  variants={itemVariants}
+                  className="text-[#6b7280] max-w-xl mb-10 leading-relaxed font-light"
+                  style={{ fontSize: subtextClamp }}
+                >
+                  {content.heroSubtext}
+                </motion.p>
+              </>
+            );
+          })()}
 
           {/* CTAs */}
           <motion.div

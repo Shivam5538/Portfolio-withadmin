@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import type { Metadata } from "next";
 import {
@@ -99,10 +100,13 @@ export default async function ProjectPage({ params }: Props) {
       {/* Hero banner */}
       <div className="relative h-[50vh] min-h-[360px] overflow-hidden bg-slate-900">
         {coverImage ? (
-          <img
+          <Image
             src={coverImage}
             alt={project.title}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="100vw"
+            priority
           />
         ) : (
           <div
@@ -190,7 +194,7 @@ export default async function ProjectPage({ params }: Props) {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {galleryImages.map((url, i) => (
                 <div key={i} className="relative h-44 rounded-2xl overflow-hidden border border-gray-200 shadow-sm group">
-                  <img src={url} alt={`Gallery screenshot ${i + 1}`} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                  <Image src={url} alt={`${project.title} screenshot ${i + 1}`} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="(max-width: 640px) 50vw, 33vw" />
                 </div>
               ))}
             </div>

@@ -1,4 +1,4 @@
-# Alex Morgan — Portfolio
+# Shivam Zaware — Portfolio
 
 A modern, full-stack personal portfolio with a secured admin dashboard. Built with Next.js 14, TypeScript, Tailwind CSS, Prisma, and Supabase.
 
@@ -39,6 +39,9 @@ Edit `.env.local` and fill in your values:
 | `RESEND_API_KEY` | Resend API key (optional — form still saves to DB) |
 | `CONTACT_EMAIL` | Email that receives contact form submissions |
 | `NEXT_PUBLIC_SITE_URL` | Public URL for SEO/sitemap |
+| `SUPABASE_URL` | Supabase project URL (for file storage) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (for file storage) |
+| `NEXT_PUBLIC_GA_ID` | GA4 Measurement ID (optional — analytics) |
 
 ### 3. Set up the database
 
@@ -73,11 +76,16 @@ Visit `http://localhost:3000/admin` for the admin dashboard.
 | Model | Fields |
 |---|---|
 | `Profile` | name, tagline, bio, avatarUrl, resumeUrl, socialLinks (JSON) |
-| `Project` | title, slug, description, longDesc, coverImageUrl, techStack[], liveUrl, githubUrl, featured, order |
-| `Skill` | name, category, iconUrl, proficiencyLevel, order |
+| `Project` | title, slug, description, longDesc, coverImageUrl, techStack[], liveUrl, githubUrl, challenge, solution, result, featured, order |
+| `Skill` | name, category, iconKey, proficiencyLevel, tileSize, order |
+| `Technology` | name, category, iconKey |
 | `Experience` | role, company, startDate, endDate, description, techTags[], order |
-| `Message` | name, email, message, read |
-| `AdminUser` | email, passwordHash |
+| `Message` | name, email, phone, message, read |
+| `AdminUser` | email, passwordHash, passwordResetTokenHash, pendingEmail, emailChangeTokenHash |
+| `SiteContent` | All editable copy for Hero, About, Contact, Footer sections |
+| `LayoutSetting` | activeTemplateId (Skills layout), activeStatsTemplate |
+| `SlotAssignment` | Maps Technology → Skills template slot |
+| `MediaFile` | Tracks uploaded files (filename, url, mimeType, size, category) |
 
 ---
 

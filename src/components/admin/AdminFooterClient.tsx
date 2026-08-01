@@ -15,7 +15,10 @@ import {
   Compass,
   Plus,
   Trash,
+  Share2,
+  Heart,
 } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 
 export default function AdminFooterClient({ initialData }: { initialData: any }) {
   const [formData, setFormData] = useState<any>(initialData || {});
@@ -306,6 +309,38 @@ export default function AdminFooterClient({ initialData }: { initialData: any })
               </div>
             </div>
           </div>
+
+          {/* Section 3: WhatsApp & Social Media Links */}
+          <div className="bg-white p-6 rounded-2xl shadow-xs border border-gray-200/80 space-y-5">
+            <div className="border-b border-gray-100 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Share2 size={18} className="text-green-600" />
+                <h2 className="text-base font-bold text-gray-800">3. Footer WhatsApp & Social Link</h2>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-200">
+                Footer Icon
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-600 block mb-1.5 flex items-center gap-1.5">
+                  <FaWhatsapp size={15} className="text-emerald-500" /> WhatsApp Link / Phone Number
+                </label>
+                <input
+                  type="text"
+                  name="whatsappUrl"
+                  value={formData.whatsappUrl || ""}
+                  onChange={handleChange}
+                  placeholder="https://wa.me/1234567890 or +1234567890"
+                  className="w-full p-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-green-500 focus:outline-none"
+                />
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Enter your direct WhatsApp chat link (e.g. <code>https://wa.me/919876543210</code>) or phone number with country code. A WhatsApp icon will automatically display in the footer social icons.
+                </p>
+              </div>
+            </div>
+          </div>
         </form>
 
         {/* Right Column — Sticky Live Preview Card */}
@@ -320,21 +355,17 @@ export default function AdminFooterClient({ initialData }: { initialData: any })
               </span>
             </div>
 
-            {/* Mini Footer Strip Preview */}
-            <div className="p-4 rounded-xl bg-gray-50/80 border border-gray-200/80 text-left space-y-3">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                {/* Copyright */}
-                <div className="text-gray-500 text-[11px] text-center sm:text-left">
-                  © <strong className="text-gray-800 font-semibold">{previewYear}</strong>{" "}
-                  <span className="text-gray-800 font-medium">{formData.footerText || "Alex Morgan"}</span>.{" "}
-                  {formData.footerCopyright || "All rights reserved."}
-                </div>
+            {/* Mini Footer Strip Preview (Light Theme) */}
+            <div className="p-5 rounded-xl bg-[#fafafa] text-gray-700 border border-gray-200 text-left space-y-4 shadow-2xs relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-purple-500 to-amber-500" />
 
+              {/* Navigation & Back to Top Row */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-3 border-b border-gray-200/80 text-xs">
                 {/* Nav Links */}
                 {navLinks.length > 0 && (
                   <div className="flex flex-wrap justify-center gap-3">
                     {navLinks.map((l, i) => (
-                      <span key={i} className="text-[10px] font-medium text-gray-600">
+                      <span key={i} className="text-[11px] font-semibold text-gray-700">
                         {l.label}
                       </span>
                     ))}
@@ -342,9 +373,21 @@ export default function AdminFooterClient({ initialData }: { initialData: any })
                 )}
 
                 {/* Back to top */}
-                <div className="flex items-center gap-1 text-[11px] text-gray-500 shrink-0">
-                  <ArrowUp size={12} />
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-gray-200 rounded-full text-[11px] font-semibold text-gray-700 shadow-2xs shrink-0">
+                  <ArrowUp size={12} className="text-blue-600" />
                   <span>{formData.footerBackToTop || "Back to top"}</span>
+                </div>
+              </div>
+
+              {/* Copyright & Built with Love */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] text-gray-500 font-medium">
+                <div>
+                  © {previewYear} <strong className="text-gray-900 font-bold">{formData.footerText || "Shivam Zaware"}</strong>.{" "}
+                  {formData.footerCopyright || "All rights reserved."}
+                </div>
+                <div className="flex items-center gap-1 text-gray-500">
+                  <span>Designed & built with</span>
+                  <Heart size={12} className="text-rose-500 fill-rose-500" />
                 </div>
               </div>
             </div>

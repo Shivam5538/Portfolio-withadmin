@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useAnimation, AnimatePresence } from "framer-motion";
+import { motion, useAnimation, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { renderIconByKey, getBrandColor } from "@/lib/icons";
 import { Sparkles } from "lucide-react";
+import { SectionWrapper } from "@/components/ui/SectionWrapper";
 
 import { getTemplateById } from "@/lib/templates";
 
@@ -312,7 +313,7 @@ export default function Skills({ skills = [], activeTemplateId = "template_1", s
         }));
 
   return (
-    <>
+    <SectionWrapper id="skills">
       {/* Dynamic CSS styles for hover effects */}
       <style>{`
         .skill-tile-root:hover .skill-hover-glow { opacity: 1 !important; }
@@ -325,7 +326,7 @@ export default function Skills({ skills = [], activeTemplateId = "template_1", s
         }
       `}</style>
 
-      <section id="skills" className="section relative bg-[#fafafa] overflow-hidden select-none py-16 sm:py-24 lg:py-28">
+      <section className="section relative bg-[#fafafa] overflow-hidden select-none py-16 sm:py-24 lg:py-28">
         {/* Background Blobs for Glass Refraction */}
         <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
           <div className="absolute top-[5%]   left-[5%]  w-[420px] h-[420px] bg-blue-400/20   rounded-full blur-[120px] mix-blend-multiply" />
@@ -451,6 +452,6 @@ export default function Skills({ skills = [], activeTemplateId = "template_1", s
           </div>
         </div>
       </section>
-    </>
+    </SectionWrapper>
   );
 }
