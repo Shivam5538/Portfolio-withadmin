@@ -65,9 +65,13 @@ DROP POLICY IF EXISTS "Public can submit messages" ON "Message";
 CREATE POLICY "Public can submit messages" ON "Message" FOR INSERT TO anon, authenticated WITH CHECK (true);
 
 -- -------------------------------------------------------
--- 3. SENSITIVE / AUTH TABLES (AdminUser, etc.)
+-- 3. SENSITIVE / AUTH TABLES (AdminUser, ActivityLog, etc.)
 -- Enable RLS with zero policies to deny all anon/authenticated access by default.
 -- -------------------------------------------------------
 
 ALTER TABLE "AdminUser" ENABLE ROW LEVEL SECURITY;
 -- No SELECT/INSERT/UPDATE/DELETE policies created for AdminUser.
+
+ALTER TABLE "ActivityLog" ENABLE ROW LEVEL SECURITY;
+-- No SELECT/INSERT/UPDATE/DELETE policies created for ActivityLog.
+

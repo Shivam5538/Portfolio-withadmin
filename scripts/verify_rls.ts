@@ -128,6 +128,18 @@ async function runVerification() {
     passedAll = false;
   }
 
+  // Test 7: Attempting GET on ActivityLog table via anon key
+  console.log("7. Testing GET /rest/v1/ActivityLog (Should be BLOCKED for anon)...");
+  const res7 = await testFetch("ActivityLog?select=*");
+  if (res7.status === 200 && Array.isArray(res7.data) && res7.data.length === 0) {
+    console.log("   ✅ PASS: Reading ActivityLog table returned 0 rows (RLS default deny).");
+  } else if (res7.status === 401 || res7.status === 403) {
+    console.log(`   ✅ PASS: Reading ActivityLog table blocked with status ${res7.status}.`);
+  } else {
+    console.error(`   ❌ FAIL: Reading ActivityLog table was NOT blocked! Status ${res7.status}:`, res7.data);
+    passedAll = false;
+  }
+
   console.log("\n=================================================");
   if (passedAll) {
     console.log("🎉 ALL RLS VERIFICATION TESTS PASSED SUCCESSFULLY!");
