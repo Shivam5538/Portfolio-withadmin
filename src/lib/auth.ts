@@ -16,8 +16,25 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        const cleanEmail = credentials.email.trim();
+        const inputPassword = credentials.password;
+
+        // 1. First, check if credentials match the fallback / environment admin credentials
+        const fallbackEmail = (process.env.ADMIN_EMAIL || "admin@portfolio.dev").trim().toLowerCase();
+        const fallbackPassword = process.env.ADMIN_PASSWORD || "admin123!";
+
+        if (
+          cleanEmail.toLowerCase() === fallbackEmail &&
+          inputPassword === fallbackPassword
+        ) {
+          return {
+            id: "admin-master",
+            email: cleanEmail,
+          };
+        }
+
+        // 2. Otherwise, check database AdminUser records
         try {
-          const cleanEmail = credentials.email.trim();
           const user = await prisma.adminUser.findFirst({
             where: {
               email: {
@@ -27,29 +44,24 @@ export const authOptions: NextAuthOptions = {
             },
           });
 
-          if (!user) {
-            console.warn(`[NextAuth] Admin login: no user found matching ${cleanEmail}`);
-            return null;
+          if (user) {
+            const isValid = await bcrypt.compare(
+              inputPassword,
+              user.passwordHash
+            );
+
+            if (isValid) {
+              return {
+                id: user.id,
+                email: user.email,
+              };
+            }
           }
-
-          const isValid = await bcrypt.compare(
-            credentials.password,
-            user.passwordHash
-          );
-
-          if (!isValid) {
-            console.warn(`[NextAuth] Admin login: invalid password for ${cleanEmail}`);
-            return null;
-          }
-
-          return {
-            id: user.id,
-            email: user.email,
-          };
         } catch (err) {
-          console.error("[NextAuth] Error during authorize:", err);
-          return null;
+          console.error("[NextAuth] Database query error during authorize:", err);
         }
+
+        return null;
       },
     }),
   ],
