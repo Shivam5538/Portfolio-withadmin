@@ -27,7 +27,9 @@ interface Props {
 export async function generateStaticParams() {
   try {
     const projects = await prisma.project.findMany({ select: { slug: true } });
-    return projects.map((p) => ({ slug: p.slug }));
+    return projects
+      .filter((p) => p.slug && !p.slug.includes("://") && !p.slug.includes("/") && !p.slug.includes("\\"))
+      .map((p) => ({ slug: p.slug }));
   } catch {
     return [];
   }

@@ -233,6 +233,16 @@ export default async function HomePage() {
     },
   }));
 
+  const serializedSkills = (skills || []).map((s) => ({
+    id: s.id,
+    name: s.name,
+    category: s.category,
+    iconKey: s.iconKey,
+    tileSize: (s.tileSize as "1x1" | "2x1" | "1x2" | "2x2" | null) || "1x1",
+    proficiencyLevel: s.proficiencyLevel,
+    order: s.order,
+  }));
+
   return (
     <SmoothScrollProvider>
       <ScrollProgressBar />
@@ -241,7 +251,7 @@ export default async function HomePage() {
         <Hero siteContent={serializedSiteContent} />
         <About siteContent={serializedSiteContent} profile={serializedProfile} />
         <Stats siteContent={serializedSiteContent} activeStatsTemplate={effectiveStatsTemplate} />
-        <Skills skills={skills} activeTemplateId={activeTemplateId} slotAssignments={serializedAssignments} />
+        <Skills skills={serializedSkills} activeTemplateId={activeTemplateId} slotAssignments={serializedAssignments} />
         <Experience experience={serializedExperience} />
         <Projects projects={serializedProjects} isHomepage={true} />
         <Contact siteContent={serializedSiteContent} />
