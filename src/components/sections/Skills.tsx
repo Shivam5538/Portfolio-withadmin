@@ -285,17 +285,36 @@ export default function Skills({ skills = [], activeTemplateId = "template_1", s
   const template = getTemplateById(activeTemplateId);
 
   // Build items from active template slots
+  const hasDbAssignments = slotAssignments.some((a) => a.technology);
+
   const slotItems = template.slots
     .map((slot) => {
       const assignment = slotAssignments.find((a) => a.slotId === slot.slotId);
-      if (!assignment || !assignment.technology) return null;
+      if (assignment && assignment.technology) {
+        return {
+          id: slot.slotId,
+          skill: {
+            id: assignment.technology.id,
+            name: assignment.technology.name,
+            category: assignment.technology.category,
+            iconKey: assignment.technology.iconKey,
+          },
+          size: `${slot.colSpan}x${slot.rowSpan}` as TileSize,
+        };
+      }
+
+      // If user has legacy skills in DB and no slot assignments, prefer legacy skills
+      if (!hasDbAssignments && skills.length > 0) return null;
+
+      // Fallback to default technology for this slot
+      const defaultName = slot.defaultTechName || "React";
       return {
         id: slot.slotId,
         skill: {
-          id: assignment.technology.id,
-          name: assignment.technology.name,
-          category: assignment.technology.category,
-          iconKey: assignment.technology.iconKey,
+          id: slot.slotId,
+          name: defaultName,
+          category: "Frontend",
+          iconKey: defaultName,
         },
         size: `${slot.colSpan}x${slot.rowSpan}` as TileSize,
       };

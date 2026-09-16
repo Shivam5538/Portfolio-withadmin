@@ -25,7 +25,7 @@ function safeJsonParse<T>(val: any, fallback: T): T {
 
 async function getData() {
   try {
-    const [profile, siteContent, experience, projects, layoutSetting, allTechnologies] = await Promise.all([
+    const [profile, siteContent, experience, projects, layoutSetting, allTechnologies, dbSkills] = await Promise.all([
       prisma.profile.findFirst().catch((err) => {
         console.error("Error fetching profile:", err);
         return null;
@@ -56,6 +56,12 @@ async function getData() {
         console.error("Error fetching technologies:", err);
         return [];
       }),
+      prisma.skill
+        .findMany({ orderBy: { order: "asc" } })
+        .catch((err) => {
+          console.error("Error fetching skills:", err);
+          return [];
+        }),
     ]);
 
     const activeTemplateId = layoutSetting?.activeTemplateId || "template_1";
@@ -81,6 +87,7 @@ async function getData() {
       activeStatsTemplate,
       slotAssignments: slotAssignments || [],
       allTechnologies: allTechnologies || [],
+      skills: dbSkills || [],
     };
   } catch (err) {
     console.error("Failed to load page data:", err);
@@ -93,6 +100,7 @@ async function getData() {
       activeStatsTemplate: "template_1",
       slotAssignments: [],
       allTechnologies: [],
+      skills: [],
     };
   }
 }
@@ -107,6 +115,7 @@ export default async function HomePage() {
     activeStatsTemplate,
     slotAssignments,
     allTechnologies,
+    skills,
   } = await getData();
 
   const serializedProfile = profile
@@ -232,7 +241,7 @@ export default async function HomePage() {
         <Hero siteContent={serializedSiteContent} />
         <About siteContent={serializedSiteContent} profile={serializedProfile} />
         <Stats siteContent={serializedSiteContent} activeStatsTemplate={effectiveStatsTemplate} />
-        <Skills activeTemplateId={activeTemplateId} slotAssignments={serializedAssignments} />
+        <Skills skills={skills} activeTemplateId={activeTemplateId} slotAssignments={serializedAssignments} />
         <Experience experience={serializedExperience} />
         <Projects projects={serializedProjects} isHomepage={true} />
         <Contact siteContent={serializedSiteContent} />
