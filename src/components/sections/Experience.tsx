@@ -35,6 +35,55 @@ function formatDate(dateStr: string) {
 }
 
 export default function Experience({ experience }: ExperienceProps) {
+  const defaultExperience: ExperienceItem[] = [
+    {
+      id: "exp-default-1",
+      role: "Senior Full-Stack Developer",
+      company: "TechCorp Solutions",
+      startDate: "2022-01-01T00:00:00.000Z",
+      endDate: null,
+      description: "Led development of the company's flagship SaaS platform, architecting microservices and improving query performance by 40%. Collaborated with design and product teams to deliver pixel-perfect user experiences.",
+      techTags: ["React", "Node.js", "PostgreSQL", "AWS", "Docker"],
+      technologies: [
+        { id: "1", name: "React", category: "Frontend", iconKey: "SiReact" },
+        { id: "2", name: "Node.js", category: "Backend", iconKey: "SiNodedotjs" },
+        { id: "3", name: "PostgreSQL", category: "Database", iconKey: "SiPostgresql" },
+        { id: "4", name: "Docker", category: "DevOps", iconKey: "SiDocker" },
+      ],
+    },
+    {
+      id: "exp-default-2",
+      role: "Frontend Developer",
+      company: "Creative Digital Agency",
+      startDate: "2019-06-01T00:00:00.000Z",
+      endDate: "2021-12-31T00:00:00.000Z",
+      description: "Built interactive web experiences for 20+ clients across e-commerce, fintech, and media industries. Introduced component-driven design systems that reduced development time by 30%.",
+      techTags: ["React", "TypeScript", "GraphQL", "Tailwind CSS", "Figma"],
+      technologies: [
+        { id: "5", name: "React", category: "Frontend", iconKey: "SiReact" },
+        { id: "6", name: "TypeScript", category: "Frontend", iconKey: "SiTypescript" },
+        { id: "7", name: "Tailwind CSS", category: "Frontend", iconKey: "SiTailwindcss" },
+        { id: "8", name: "GraphQL", category: "Backend", iconKey: "SiGraphql" },
+      ],
+    },
+    {
+      id: "exp-default-3",
+      role: "Full-Stack Web Developer",
+      company: "StartupHub",
+      startDate: "2018-03-01T00:00:00.000Z",
+      endDate: "2019-05-31T00:00:00.000Z",
+      description: "Developed and maintained multiple client-facing web applications. Gained deep experience in responsive design and modern JavaScript frameworks.",
+      techTags: ["JavaScript", "Node.js", "PostgreSQL", "Git"],
+      technologies: [
+        { id: "9", name: "JavaScript", category: "Frontend", iconKey: "SiJavascript" },
+        { id: "10", name: "Node.js", category: "Backend", iconKey: "SiNodedotjs" },
+        { id: "11", name: "PostgreSQL", category: "Database", iconKey: "SiPostgresql" },
+      ],
+    },
+  ];
+
+  const effectiveExperience = experience && experience.length > 0 ? experience : defaultExperience;
+
   return (
     <SectionWrapper id="experience">
       <section className="section relative overflow-hidden bg-[#fafafa] text-gray-800 py-16 sm:py-24 lg:py-28">
@@ -81,7 +130,7 @@ export default function Experience({ experience }: ExperienceProps) {
             />
 
             <div className="flex flex-col gap-10">
-              {experience.map((exp, idx) => {
+              {effectiveExperience.map((exp, idx) => {
                 const isCurrent = !exp.endDate;
                 const techList: Array<Technology | string> = exp.technologies && exp.technologies.length > 0
                   ? exp.technologies
