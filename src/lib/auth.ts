@@ -16,23 +16,40 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await prisma.adminUser.findUnique({
-          where: { email: credentials.email },
-        });
+        try {
+          const cleanEmail = credentials.email.trim();
+          const user = await prisma.adminUser.findFirst({
+            where: {
+              email: {
+                equals: cleanEmail,
+                mode: "insensitive",
+              },
+            },
+          });
 
-        if (!user) return null;
+          if (!user) {
+            console.warn(`[NextAuth] Admin login: no user found matching ${cleanEmail}`);
+            return null;
+          }
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.passwordHash
-        );
+          const isValid = await bcrypt.compare(
+            credentials.password,
+            user.passwordHash
+          );
 
-        if (!isValid) return null;
+          if (!isValid) {
+            console.warn(`[NextAuth] Admin login: invalid password for ${cleanEmail}`);
+            return null;
+          }
 
-        return {
-          id: user.id,
-          email: user.email,
-        };
+          return {
+            id: user.id,
+            email: user.email,
+          };
+        } catch (err) {
+          console.error("[NextAuth] Error during authorize:", err);
+          return null;
+        }
       },
     }),
   ],
