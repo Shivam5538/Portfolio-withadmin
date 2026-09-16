@@ -288,7 +288,7 @@ export default function Skills({ skills = [], activeTemplateId = "template_1", s
   const hasDbAssignments = slotAssignments.some((a) => a.technology);
 
   const slotItems = template.slots
-    .map((slot) => {
+    .map((slot, index) => {
       const assignment = slotAssignments.find((a) => a.slotId === slot.slotId);
       if (assignment && assignment.technology) {
         return {
@@ -303,8 +303,20 @@ export default function Skills({ skills = [], activeTemplateId = "template_1", s
         };
       }
 
-      // If user has legacy skills in DB and no slot assignments, prefer legacy skills
-      if (!hasDbAssignments && skills.length > 0) return null;
+      // If user has skills in DB, map slot to that skill
+      if (skills[index]) {
+        const s = skills[index];
+        return {
+          id: slot.slotId,
+          skill: {
+            id: s.id,
+            name: s.name,
+            category: s.category || "Frontend",
+            iconKey: s.iconKey || s.name,
+          },
+          size: `${slot.colSpan}x${slot.rowSpan}` as TileSize,
+        };
+      }
 
       // Fallback to default technology for this slot
       const defaultName = slot.defaultTechName || "React";
