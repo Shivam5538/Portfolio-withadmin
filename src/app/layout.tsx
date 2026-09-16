@@ -9,12 +9,22 @@ const inter = Inter({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://shivamzaware.dev";
+function getMetadataBaseUrl(): URL {
+  const envUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://shivamzaware.dev");
+  const urlWithProto = envUrl.startsWith("http://") || envUrl.startsWith("https://")
+    ? envUrl
+    : `https://${envUrl}`;
+  try {
+    return new URL(urlWithProto);
+  } catch {
+    return new URL("https://shivamzaware.dev");
+  }
+}
+
+const siteUrl = getMetadataBaseUrl().origin;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
-  ),
+  metadataBase: getMetadataBaseUrl(),
   title: {
     template: "%s | Shivam Zaware",
     default: "Shivam Zaware — Full-Stack Developer",

@@ -82,9 +82,16 @@ export default async function ProjectPage({ params }: Props) {
   }
 
   // Resolve technologies against master DB pool
-  const allTechnologies = await prisma.technology.findMany();
-  const techMap = new Map(allTechnologies.map((t) => [t.id, t]));
-  const techByName = new Map(allTechnologies.map((t) => [t.name.toLowerCase().trim(), t]));
+  let allTechnologies: any[] = [];
+  try {
+    allTechnologies = await prisma.technology.findMany();
+  } catch (err) {
+    console.error("Error fetching technologies for project page:", err);
+    allTechnologies = [];
+  }
+
+  const techMap = new Map((allTechnologies || []).map((t) => [t.id, t]));
+  const techByName = new Map((allTechnologies || []).map((t) => [t.name.toLowerCase().trim(), t]));
 
   const resolvedTechStack = techStack.map((item) => {
     const itemStr = String(item).trim();

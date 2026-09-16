@@ -14,40 +14,52 @@ export const metadata: Metadata = {
     "Explore the complete portfolio of web applications, mobile software, and open-source projects built by Shivam Zaware.",
 };
 
+function safeJsonParse<T>(val: any, fallback: T): T {
+  if (!val) return fallback;
+  if (typeof val !== "string") return val as T;
+  try {
+    return JSON.parse(val) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 async function getProjectsData() {
   try {
     const [profile, siteContent, projects, allTechnologies] = await Promise.all([
-      prisma.profile.findFirst(),
-      prisma.siteContent.findFirst(),
-      prisma.project.findMany({
-        orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
-      }),
-      prisma.technology.findMany(),
+      prisma.profile.findFirst().catch(() => null),
+      prisma.siteContent.findFirst().catch(() => null),
+      prisma.project
+        .findMany({
+          orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
+        })
+        .catch(() => []),
+      prisma.technology.findMany().catch(() => []),
     ]);
 
-    const techMap = new Map(allTechnologies.map((t) => [t.id, t]));
-    const techByName = new Map(allTechnologies.map((t) => [t.name.toLowerCase().trim(), t]));
+    const techMap = new Map((allTechnologies || []).map((t) => [t.id, t]));
+    const techByName = new Map((allTechnologies || []).map((t) => [t.name.toLowerCase().trim(), t]));
 
     const serializedProfile = profile
       ? {
           ...profile,
-          createdAt: profile.createdAt.toISOString(),
-          updatedAt: profile.updatedAt.toISOString(),
-          stats: profile.stats ? JSON.parse(profile.stats) : [],
+          createdAt: profile.createdAt ? profile.createdAt.toISOString() : new Date().toISOString(),
+          updatedAt: profile.updatedAt ? profile.updatedAt.toISOString() : new Date().toISOString(),
+          stats: safeJsonParse(profile.stats, []),
         }
       : null;
 
     const serializedSiteContent = siteContent
       ? {
           ...siteContent,
-          createdAt: siteContent.createdAt.toISOString(),
-          updatedAt: siteContent.updatedAt.toISOString(),
+          createdAt: siteContent.createdAt ? siteContent.createdAt.toISOString() : new Date().toISOString(),
+          updatedAt: siteContent.updatedAt ? siteContent.updatedAt.toISOString() : new Date().toISOString(),
           socialLinks: profile?.socialLinks || "[]",
         }
       : { socialLinks: profile?.socialLinks || "[]" };
 
-    const serializedProjects = projects.map((p) => {
-      const rawTechStack = p.techStack ? JSON.parse(p.techStack) : [];
+    const serializedProjects = (projects || []).map((p) => {
+      const rawTechStack = safeJsonParse(p.techStack, []);
       const resolvedTechnologies = (Array.isArray(rawTechStack) ? rawTechStack : []).map((item: any) => {
         if (typeof item === "object" && item !== null && item.name) return item;
         const itemStr = String(item).trim();
@@ -56,7 +68,7 @@ async function getProjectsData() {
         return { id: itemStr, name: itemStr, category: "Frontend", iconKey: "SiCode" };
       });
 
-      const rawImages = p.images ? JSON.parse(p.images) : [];
+      const rawImages = safeJsonParse(p.images, []);
       const galleryImages =
         Array.isArray(rawImages) && rawImages.length > 0
           ? rawImages
@@ -66,9 +78,9 @@ async function getProjectsData() {
 
       return {
         ...p,
-        createdAt: p.createdAt.toISOString(),
-        updatedAt: p.updatedAt.toISOString(),
-        techStack: rawTechStack,
+        createdAt: p.createdAt ? p.createdAt.toISOString() : new Date().toISOString(),
+        updatedAt: p.updatedAt ? p.updatedAt.toISOString() : new Date().toISOString(),
+        techStack: Array.isArray(rawTechStack) ? rawTechStack : [],
         technologies: resolvedTechnologies,
         images: galleryImages,
         category: p.category || "Full-Stack",
