@@ -158,23 +158,28 @@ export default function AdminExperienceClient() {
     };
 
     try {
-      if (editing) {
-        await fetch(`/api/experience/${editing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      } else {
-        await fetch("/api/experience", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+      const res = editing
+        ? await fetch(`/api/experience/${editing.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+        : await fetch("/api/experience", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Server responded with ${res.status}`);
       }
+
       setShowModal(false);
       fetchData();
     } catch (err) {
       console.error("Failed to save experience:", err);
+      alert(`Failed to save experience: ${err instanceof Error ? err.message : "Database connection error."}`);
     } finally {
       setSaving(false);
     }

@@ -302,23 +302,28 @@ export default function AdminProjectsClient() {
     };
 
     try {
-      if (editing) {
-        await fetch(`/api/projects/${editing.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-      } else {
-        await fetch("/api/projects", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+      const res = editing
+        ? await fetch(`/api/projects/${editing.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+        : await fetch("/api/projects", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Server responded with ${res.status}`);
       }
+
       setShowModal(false);
       fetchData();
     } catch (err) {
       console.error("Failed to save project:", err);
+      alert(`Failed to save project: ${err instanceof Error ? err.message : "Database connection error. Please verify your Supabase database is active."}`);
     } finally {
       setSaving(false);
     }

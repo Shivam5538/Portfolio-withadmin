@@ -249,6 +249,7 @@ export default function AdminSkillsClient() {
       setSelectedSlotForAssignment(null);
     } catch (err) {
       console.error("Failed to assign technology to slot:", err);
+      alert("Failed to assign slot. Please check if your Supabase database is active and reachable.");
     }
   };
 
@@ -256,24 +257,29 @@ export default function AdminSkillsClient() {
   const onSubmitTech = async (data: TechFormData) => {
     setSavingTech(true);
     try {
-      if (editingTech) {
-        await fetch(`/api/technologies/${editingTech.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-      } else {
-        await fetch("/api/technologies", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+      const res = editingTech
+        ? await fetch(`/api/technologies/${editingTech.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          })
+        : await fetch("/api/technologies", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `Server returned ${res.status}`);
       }
+
       setShowTechModal(false);
       fetchTechnologies();
       fetchLayoutData();
     } catch (err) {
       console.error("Failed to save technology:", err);
+      alert(`Failed to save technology: ${err instanceof Error ? err.message : "Database error. Check if Supabase project is active."}`);
     } finally {
       setSavingTech(false);
     }
@@ -650,24 +656,58 @@ export default function AdminSkillsClient() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {technologies.map((tech) => {
-                    const brandColor = getBrandColor(tech.name);
-                    const isAssignedToThisSlot = slotAssignments[selectedSlotForAssignment.slotId]?.id === tech.id;
+                {technologies.length === 0 ? (
+                  <div className="py-12 px-4 text-center flex flex-col items-center justify-center gap-3 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <Layers size={36} className="text-slate-400" />
+                    <div>
+                      <p className="text-sm font-bold text-slate-800">No technologies found in master pool</p>
+                      <p className="text-xs text-slate-500 mt-1 max-w-sm">
+                        You need to create technologies in your Master Pool first, or your Supabase database may currently be paused.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedSlotForAssignment(null);
+                        openCreateTech();
+                      }}
+                      className="gap-1.5 mt-2"
+                    >
+                      <Plus size={14} /> Create New Technology
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {technologies.map((tech) => {
+                      const brandColor = getBrandColor(tech.name);
+                      const isAssignedToThisSlot = slotAssignments[selectedSlotForAssignment.slotId]?.id === tech.id;
 
-                    return (
-                      <button key={tech.id} onClick={() => handleAssignTechnologyToSlot(selectedSlotForAssignment.slotId, tech)} className={`p-3.5 rounded-2xl border transition-all text-left flex items-center gap-3 group ${isAssignedToThisSlot ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/20 shadow-sm" : "border-[rgba(0,0,0,0.08)] bg-white hover:border-blue-300 hover:bg-slate-50"}`}>
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center border border-white/80 shrink-0" style={{ backgroundColor: `${brandColor}15`, color: brandColor }}>
-                          {renderIconByKey(tech.iconKey, "w-5 h-5")}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-[#111111] truncate">{tech.name}</p>
-                          <p className="text-[10px] text-[#9ca3af]">{tech.category}</p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                      return (
+                        <button
+                          key={tech.id}
+                          onClick={() => handleAssignTechnologyToSlot(selectedSlotForAssignment.slotId, tech)}
+                          className={`p-3.5 rounded-2xl border transition-all text-left flex items-center gap-3 group ${
+                            isAssignedToThisSlot
+                              ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/20 shadow-sm"
+                              : "border-[rgba(0,0,0,0.08)] bg-white hover:border-blue-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center border border-white/80 shrink-0"
+                            style={{ backgroundColor: `${brandColor}15`, color: brandColor }}
+                          >
+                            {renderIconByKey(tech.iconKey, "w-5 h-5")}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-[#111111] truncate">{tech.name}</p>
+                            <p className="text-[10px] text-[#9ca3af]">{tech.category}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
