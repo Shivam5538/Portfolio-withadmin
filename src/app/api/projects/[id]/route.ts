@@ -96,6 +96,7 @@ export async function PUT(
     }
 
     revalidatePath("/");
+    revalidatePath("/projects");
     revalidatePath("/projects/[slug]", "page");
 
     await logActivity({
@@ -128,6 +129,7 @@ export async function DELETE(
 
     await prisma.project.delete({ where: { id } });
     revalidatePath("/");
+    revalidatePath("/projects");
     revalidatePath("/projects/[slug]", "page");
 
     if (oldProject) {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { findAutoIcon } from "@/lib/iconStore";
 import { logActivity } from "@/lib/activityLog";
@@ -307,6 +308,14 @@ export async function PUT(request: Request) {
         oldValue: existing,
         newValue: content,
       });
+    }
+
+    try {
+      revalidatePath("/");
+      revalidatePath("/projects");
+      revalidatePath("/resume");
+    } catch (revalErr) {
+      console.warn("Failed to revalidate paths:", revalErr);
     }
 
     return NextResponse.json({

@@ -78,6 +78,7 @@ export async function POST(request: Request) {
     }
 
     revalidatePath("/");
+    revalidatePath("/projects");
     revalidatePath("/projects/[slug]", "page");
 
     await logActivity({
@@ -116,6 +117,7 @@ export async function PUT(request: Request) {
         )
       );
       revalidatePath("/");
+      revalidatePath("/projects");
       return NextResponse.json({ success: true });
     }
     return NextResponse.json({ error: "Invalid reorder payload" }, { status: 400 });
