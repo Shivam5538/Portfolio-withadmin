@@ -129,31 +129,41 @@ async function resolveAndMigrateCoreTechs(coreTechsRaw?: string | null) {
 
 export async function GET() {
   try {
-    let content = await prisma.siteContent.findFirst();
+    let content = await prisma.siteContent.findFirst().catch(() => null);
     if (!content) {
-      content = await prisma.siteContent.create({ data: {} });
+      try {
+        content = await prisma.siteContent.create({ data: {} });
+      } catch {
+        content = null;
+      }
     }
 
-    const profile = await prisma.profile.findFirst();
+    const profile = await prisma.profile.findFirst().catch(() => null);
 
-    const { ids, technologies, needsMigrationUpdate } = await resolveAndMigrateCoreTechs(content.coreTechs);
+    const { ids, technologies, needsMigrationUpdate } = await resolveAndMigrateCoreTechs(content?.coreTechs);
 
-    if (needsMigrationUpdate) {
-      content = await prisma.siteContent.update({
-        where: { id: content.id },
-        data: { coreTechs: JSON.stringify(ids) },
-      });
+    if (needsMigrationUpdate && content) {
+      try {
+        content = await prisma.siteContent.update({
+          where: { id: content.id },
+          data: { coreTechs: JSON.stringify(ids) },
+        });
+      } catch {}
     }
 
     return NextResponse.json({
-      ...content,
+      ...(content || {}),
       socialLinks: profile?.socialLinks || "[]",
       coreTechs: JSON.stringify(ids),
       coreTechObjects: technologies,
     });
   } catch (err) {
     console.error("GET site content error:", err);
-    return NextResponse.json({ error: "Failed to fetch site content" }, { status: 500 });
+    return NextResponse.json({
+      socialLinks: "[]",
+      coreTechs: "[]",
+      coreTechObjects: [],
+    });
   }
 }
 

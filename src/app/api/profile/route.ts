@@ -13,7 +13,7 @@ function safeParseJSON(str: string | null | undefined, fallback: any) {
 
 export async function GET() {
   try {
-    const profile = await prisma.profile.findFirst();
+    const profile = await prisma.profile.findFirst().catch(() => null);
     if (!profile) return NextResponse.json(null);
     
     return NextResponse.json({
@@ -23,7 +23,7 @@ export async function GET() {
     });
   } catch (err) {
     console.error("GET /api/profile error:", err);
-    return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 });
+    return NextResponse.json(null);
   }
 }
 

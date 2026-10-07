@@ -8,9 +8,10 @@ export async function GET() {
     const technologies = await prisma.technology.findMany({
       orderBy: [{ category: "asc" }, { name: "asc" }],
     });
-    return NextResponse.json(technologies);
+    return NextResponse.json(technologies || []);
   } catch (err) {
-    return NextResponse.json({ error: "Failed to fetch technologies" }, { status: 500 });
+    console.error("GET /api/technologies error:", err);
+    return NextResponse.json([]);
   }
 }
 
