@@ -121,9 +121,13 @@ export async function uploadToCloudStorage(
         };
       }
 
-      throw new Error(`Supabase upload failed: ${error?.message || rootError?.message}`);
+      throw new Error(`Supabase upload failed: ${error?.message || rootError?.message || "Storage service unreachable. Please ensure Supabase project is not paused."}`);
     } catch (err: any) {
       console.error("Supabase Storage upload error:", err);
+      const isDnsOrTimeout = err?.message?.includes("ENOTFOUND") || err?.message?.includes("fetch failed") || err?.code === "ENOTFOUND";
+      if (isDnsOrTimeout) {
+        throw new Error("Supabase Storage is unreachable (ENOTFOUND). Your Supabase project appears to be PAUSED. Please go to supabase.com and click 'Restore Project'.");
+      }
       throw err;
     }
   }
