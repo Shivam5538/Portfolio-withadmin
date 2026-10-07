@@ -33,31 +33,16 @@ export async function POST(request: Request) {
       // Upload to Cloud Storage
       const { url } = await uploadToCloudStorage(buffer, file.name, mimeType, category);
 
-      // Save metadata in database (resilient to transient DB errors)
-      let mediaRecord;
-      try {
-        mediaRecord = await prisma.mediaFile.create({
-          data: {
-            filename: file.name,
-            url,
-            mimeType,
-            size,
-            category,
-          },
-        });
-      } catch (dbErr) {
-        console.warn("MediaFile table metadata save failed, returning cloud URL directly:", dbErr);
-        mediaRecord = {
-          id: `temp-${Date.now()}`,
+      // Save metadata in database
+      const mediaRecord = await prisma.mediaFile.create({
+        data: {
           filename: file.name,
           url,
           mimeType,
           size,
           category,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-      }
+        },
+      });
 
       uploadedResults.push(mediaRecord);
     }
