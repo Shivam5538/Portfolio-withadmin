@@ -51,11 +51,12 @@ export default function MediaSelectInput({
           onChange(data.url);
         }
       } else {
-        alert("Failed to upload file");
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || errData.details || "Failed to upload file. Please ensure Supabase Storage is active.");
       }
     } catch (err) {
       console.error("Inline upload error:", err);
-      alert("Error uploading file");
+      alert("Error uploading file. Please check your cloud connection.");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -63,7 +64,7 @@ export default function MediaSelectInput({
   };
 
   const isImage = value && (value.match(/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i) || value.includes("image"));
-  const isPdf = value && value.endsWith(".pdf");
+  const isPdf = value && (value.toLowerCase().endsWith(".pdf") || value.toLowerCase().includes(".pdf?") || value.toLowerCase().includes("/resume"));
 
   return (
     <div className="space-y-2">

@@ -248,6 +248,17 @@ export async function PUT(request: Request) {
           console.warn("Failed to sync heroName to Profile table:", syncErr);
         }
       }
+
+      // Sync resumeUrl across Profile table if updated
+      if (sanitizedData.resumeUrl !== undefined) {
+        try {
+          await prisma.profile.updateMany({
+            data: { resumeUrl: sanitizedData.resumeUrl },
+          });
+        } catch (resumeErr) {
+          console.warn("Failed to sync resumeUrl to Profile table:", resumeErr);
+        }
+      }
     } catch (dbErr: any) {
       console.warn("Primary PUT update encountered Prisma client mismatch, retrying with core fields:", dbErr?.message);
       const coreFields = [

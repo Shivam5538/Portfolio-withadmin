@@ -725,6 +725,8 @@ export default function AdminAboutClient({ initialData }: { initialData: any }) 
                 <MediaSelectInput
                   value={formData.resumeUrl || ""}
                   onChange={(url) => setFormData((prev: any) => ({ ...prev, resumeUrl: url }))}
+                  category="Resume"
+                  accept=".pdf,application/pdf"
                   placeholder="https://supabase.co/storage/v1/object/public/uploads/resume.pdf"
                 />
               </div>
