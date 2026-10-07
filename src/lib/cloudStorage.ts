@@ -98,7 +98,8 @@ function generateCleanObjectPath(
 async function saveToLocalUploads(
   buffer: Buffer,
   objectPath: string,
-  cleanFilename: string
+  cleanFilename: string,
+  mimeType: string = "application/octet-stream"
 ): Promise<UploadResult> {
   try {
     const publicDir = path.join(process.cwd(), "public");
@@ -113,9 +114,15 @@ async function saveToLocalUploads(
       filename: cleanFilename,
       provider: "local",
     };
-  } catch (localErr) {
-    console.error("Local filesystem upload fallback error:", localErr);
-    throw localErr;
+  } catch (localErr: any) {
+    console.warn("Local filesystem write not available (serverless read-only environment), falling back to Data URL:", localErr?.message);
+    const base64Data = buffer.toString("base64");
+    const dataUrl = `data:${mimeType};base64,${base64Data}`;
+    return {
+      url: dataUrl,
+      filename: cleanFilename,
+      provider: "local",
+    };
   }
 }
 
@@ -218,8 +225,8 @@ export async function uploadToCloudStorage(
     }
   }
 
-  // 3. Fallback: Save to Local Public Uploads directory
-  return await saveToLocalUploads(buffer, objectPath, cleanFilename);
+  // 3. Fallback: Save to Local Public Uploads directory / Data URL
+  return await saveToLocalUploads(buffer, objectPath, cleanFilename, mimeType);
 }
 
 /**
