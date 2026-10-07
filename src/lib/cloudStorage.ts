@@ -13,62 +13,6 @@ export interface UploadResult {
 import https from "https";
 import http from "http";
 
-function checkUrlReachable(urlStr: string, timeoutMs = 800): Promise<boolean> {
-  if (process.env.STORAGE_PROVIDER === "local") return Promise.resolve(false);
-  return new Promise((resolve) => {
-    let settled = false;
-    let req: any = null;
-
-    const timer = setTimeout(() => {
-      if (!settled) {
-        settled = true;
-        if (req) {
-          try {
-            req.destroy();
-          } catch {}
-        }
-        resolve(false);
-      }
-    }, timeoutMs);
-
-    try {
-      const parsed = new URL(urlStr);
-      const reqModule = parsed.protocol === "https:" ? https : http;
-      req = reqModule.request(
-        {
-          hostname: parsed.hostname,
-          port: parsed.port || (parsed.protocol === "https:" ? 443 : 80),
-          path: "/auth/v1/health",
-          method: "GET",
-        },
-        (res) => {
-          if (!settled) {
-            settled = true;
-            clearTimeout(timer);
-            resolve(Boolean(res.statusCode && res.statusCode < 500));
-          }
-        }
-      );
-
-      req.on("error", () => {
-        if (!settled) {
-          settled = true;
-          clearTimeout(timer);
-          resolve(false);
-        }
-      });
-
-      req.end();
-    } catch {
-      if (!settled) {
-        settled = true;
-        clearTimeout(timer);
-        resolve(false);
-      }
-    }
-  });
-}
-
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -135,76 +79,59 @@ export async function uploadToCloudStorage(
   mimeType: string,
   category: string = "General"
 ): Promise<UploadResult> {
-  const { objectPath, cleanFilename } = await generateCleanObjectPath(originalFilename, category);
+  const { objectPath, cleanFilename } = generateCleanObjectPath(originalFilename, category);
 
   // 1. Primary Cloud Provider: Supabase Storage
   const supabase = getSupabaseServerClient();
   const bucketName = getStorageBucketName();
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 
-  if (supabase && supabaseUrl && (await checkUrlReachable(supabaseUrl))) {
+  if (supabase) {
     try {
-      const uploadSupabase = async () => {
-        // Ensure target bucket exists or auto-create public bucket
-        try {
-          const { data: buckets } = await supabase.storage.listBuckets();
-          if (buckets && !buckets.some((b) => b.name === bucketName)) {
+      // Attempt upload directly to Supabase Storage bucket
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(objectPath, buffer, {
+          contentType: mimeType,
+          upsert: true,
+        });
+
+      if (!error && data) {
+        const { data: publicUrlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(objectPath);
+
+        return {
+          url: publicUrlData.publicUrl,
+          filename: cleanFilename,
+          provider: "supabase" as const,
+        };
+      }
+
+      if (error) {
+        console.warn(`Supabase Storage upload returned error for ${objectPath}:`, error.message);
+        // If error might be due to missing bucket, attempt auto-creation
+        if (error.message?.toLowerCase().includes("bucket not found") || error.message?.toLowerCase().includes("not found")) {
+          try {
             await supabase.storage.createBucket(bucketName, { public: true });
+            const retryRes = await supabase.storage.from(bucketName).upload(objectPath, buffer, {
+              contentType: mimeType,
+              upsert: true,
+            });
+            if (!retryRes.error && retryRes.data) {
+              const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(objectPath);
+              return {
+                url: publicUrlData.publicUrl,
+                filename: cleanFilename,
+                provider: "supabase" as const,
+              };
+            }
+          } catch (createErr) {
+            console.warn("Auto create bucket failed:", createErr);
           }
-        } catch {
-          // Ignore if already exists
         }
-
-        const { data, error } = await supabase.storage
-          .from(bucketName)
-          .upload(objectPath, buffer, {
-            contentType: mimeType,
-            upsert: true,
-          });
-
-        if (!error && data) {
-          const { data: publicUrlData } = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(objectPath);
-
-          return {
-            url: publicUrlData.publicUrl,
-            filename: cleanFilename,
-            provider: "supabase" as const,
-          };
-        }
-
-        // Fallback to root object path if category folder upload fails
-        const rootObjectPath = `uploads/${cleanFilename}`;
-        const { data: rootData, error: rootError } = await supabase.storage
-          .from(bucketName)
-          .upload(rootObjectPath, buffer, {
-            contentType: mimeType,
-            upsert: true,
-          });
-
-        if (!rootError && rootData) {
-          const { data: publicUrlData } = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(rootObjectPath);
-
-          return {
-            url: publicUrlData.publicUrl,
-            filename: cleanFilename,
-            provider: "supabase" as const,
-          };
-        }
-
-        throw new Error(`Supabase upload error: ${error?.message || rootError?.message}`);
-      };
-
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error("Supabase Storage upload timed out")), 2000);
-      });
-
-      return await Promise.race([uploadSupabase(), timeoutPromise]);
+      }
     } catch (err: any) {
-      console.warn("Supabase Storage unreachable or timed out, falling back to local storage:", err?.message || err);
+      console.warn("Supabase Storage upload threw exception:", err?.message || err);
     }
   }
 
@@ -221,7 +148,7 @@ export async function uploadToCloudStorage(
         provider: "vercel-blob",
       };
     } catch (err) {
-      console.warn("Vercel Blob upload failed, falling back to local storage:", err);
+      console.warn("Vercel Blob upload failed:", err);
     }
   }
 

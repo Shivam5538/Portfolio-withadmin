@@ -202,12 +202,15 @@ model SiteContent {
 model MediaFile {
   id        String   @id @default(cuid())
   filename  String
-  url       String   @unique
+  url       String   @db.Text
   mimeType  String
   size      Int
   category  String   @default("General")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([createdAt])
 }
 
 model ActivityLog {

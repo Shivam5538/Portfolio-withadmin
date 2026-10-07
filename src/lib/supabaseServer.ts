@@ -28,10 +28,7 @@ export function getSupabaseServerClient(): SupabaseClient | null {
     },
     global: {
       fetch: (url, options = {}) => {
-        return fetch(url, {
-          ...options,
-          signal: (options as any)?.signal || AbortSignal.timeout(3500),
-        });
+        return fetch(url, options);
       },
     },
   });

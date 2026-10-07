@@ -249,8 +249,8 @@ export default function AdminFilesClient() {
         await Promise.all([fetchFiles(), fetchStorageStats()]);
         setShowUploadModal(false);
       } else {
-        const errData = await res.json();
-        alert(errData.error || "Failed to upload file(s).");
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.error || errData.details || `Failed to upload file(s) (HTTP ${res.status}). Please verify Supabase Storage configuration.`);
       }
     } catch (err: any) {
       console.error("Upload error:", err);
