@@ -72,6 +72,19 @@ export function getBrandColor(nameOrKey: string): string {
   if (n.includes("golang") || n.includes("go")) return "#00ADD8";
   if (n.includes("cplusplus") || n.includes("c++")) return "#00599C";
   if (n.includes("csharp") || n.includes("c#")) return "#239120";
+  if (n.includes("salesforce")) return "#00A1E0";
+  if (n.includes("openai") || n.includes("chatgpt")) return "#10A37F";
+  if (n.includes("tableau")) return "#E97627";
+  if (n.includes("powerbi")) return "#F2C811";
+  if (n.includes("oracle")) return "#F80000";
+  if (n.includes("servicenow")) return "#81B5A1";
+  if (n.includes("sap")) return "#0FAAFF";
+  if (n.includes("snowflake")) return "#29B5E8";
+  if (n.includes("databricks")) return "#FF3621";
+  if (n.includes("claude") || n.includes("anthropic")) return "#D97706";
+  if (n.includes("gemini")) return "#8E75FF";
+  if (n.includes("hubspot")) return "#FF7A59";
+  if (n.includes("jira")) return "#0052CC";
 
   return "#3b82f6";
 }

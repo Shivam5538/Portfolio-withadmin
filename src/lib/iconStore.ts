@@ -2,6 +2,7 @@ import * as SiIcons from "react-icons/si";
 import React from "react";
 import { Code2 } from "lucide-react";
 import { TECH_ICON_SLUG_SET } from "@/lib/techIconAllowlist";
+import { CUSTOM_ICON_COMPONENTS } from "@/lib/customIcons";
 
 export interface IconItem {
   key: string;
@@ -24,6 +25,21 @@ export function slugifyIconName(name: string): string {
 const KEY_TO_COMPONENT_MAP = new Map<string, React.ComponentType<{ className?: string }>>();
 const SLUG_TO_KEY_MAP = new Map<string, string>();
 export const ICON_LIST: IconItem[] = [];
+
+// Populate custom icons (Salesforce, OpenAI, Tableau, PowerBI, Oracle, ServiceNow)
+Object.entries(CUSTOM_ICON_COMPONENTS).forEach(([key, component]) => {
+  KEY_TO_COMPONENT_MAP.set(key, component as any);
+  const rawSlug = slugifyIconName(key.substring(2));
+  if (rawSlug) {
+    SLUG_TO_KEY_MAP.set(rawSlug, key);
+  }
+  let cleanName = key.substring(2).replace(/([a-z])([A-Z])/g, "$1 $2");
+  ICON_LIST.push({
+    key,
+    name: cleanName,
+    slug: rawSlug,
+  });
+});
 
 // Populate maps at load time from react-icons/si
 Object.entries(SiIcons).forEach(([key, component]) => {
@@ -90,6 +106,21 @@ const ALIAS_MAP: Record<string, string> = {
   cplusplus: "sicplusplus",
   cs: "sicsharp",
   csharp: "sicsharp",
+  salesforce: "SiSalesforce",
+  openai: "SiOpenai",
+  chatgpt: "SiChatgpt",
+  tableau: "SiTableau",
+  powerbi: "SiPowerbi",
+  oracle: "SiOracle",
+  servicenow: "SiServicenow",
+  claude: "SiClaude",
+  gemini: "SiGooglegemini",
+  snowflake: "SiSnowflake",
+  databricks: "SiDatabricks",
+  sap: "SiSap",
+  hubspot: "SiHubspot",
+  jira: "SiJira",
+  confluence: "SiConfluence",
 };
 
 export function findAutoIcon(name: string): { key: string; name: string; isMatch: boolean } {

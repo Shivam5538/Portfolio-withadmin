@@ -59,7 +59,7 @@ interface SlotAssignment {
   technology: Technology;
 }
 
-const CATEGORIES = ["Frontend", "Backend", "Tools", "Design", "Cloud & DevOps", "Other"];
+const CATEGORIES = ["Frontend", "Backend", "Tools", "Design", "Cloud & DevOps", "Enterprise & CRM", "AI & ML", "Other"];
 
 export default function AdminSkillsClient() {
   const [activeTab, setActiveTab] = useState<"templates" | "master">("templates");
