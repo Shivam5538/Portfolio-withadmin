@@ -18,15 +18,18 @@ export async function GET(request: Request) {
       resumeUrl = profile?.resumeUrl?.trim();
     }
 
-    // 3. Redirect if valid HTTP/HTTPS URL
+    // 3. Redirect if valid URL
     if (
       resumeUrl &&
       resumeUrl !== "#" &&
-      resumeUrl !== "" &&
-      (resumeUrl.startsWith("http://") || resumeUrl.startsWith("https://"))
+      resumeUrl !== ""
     ) {
-      // 307 Temporary Redirect ensures browsers check for updated resume on subsequent requests
-      return NextResponse.redirect(resumeUrl, 307);
+      if (resumeUrl.startsWith("http://") || resumeUrl.startsWith("https://")) {
+        return NextResponse.redirect(resumeUrl, 307);
+      } else if (resumeUrl.startsWith("/")) {
+        const { origin } = new URL(request.url);
+        return NextResponse.redirect(`${origin}${resumeUrl}`, 307);
+      }
     }
 
     // 4. Fallback if no valid resume file is configured yet
