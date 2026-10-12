@@ -8,12 +8,7 @@ import React from "react";
 const LazyIconRenderer = dynamic(
   () => import("@/lib/iconStore").then((mod) => mod.IconRenderer),
   {
-    ssr: false, // Ensure it doesn't inflate the server render payload
-    loading: () => (
-      <span className="inline-block opacity-50 shrink-0">
-        <Loader2 className="w-4 h-4 animate-spin" />
-      </span>
-    ),
+    loading: () => <Code2 className="w-4 h-4 opacity-30 shrink-0" />,
   }
 );
 

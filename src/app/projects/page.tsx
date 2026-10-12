@@ -5,8 +5,7 @@ import Footer from "@/components/layout/Footer";
 import Projects from "@/components/sections/Projects";
 import { SmoothScrollProvider, ScrollProgressBar } from "@/components/providers/SmoothScrollProvider";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60; // Enable ISR caching: fast static delivery, revalidated in background
 
 export const metadata: Metadata = {
   title: "All Projects — Full-Stack Portfolio Archive",
@@ -40,9 +39,15 @@ async function getProjectsData() {
     const techMap = new Map((allTechnologies || []).map((t) => [t.id, t]));
     const techByName = new Map((allTechnologies || []).map((t) => [t.name.toLowerCase().trim(), t]));
 
+    const cleanProfileResume = profile?.resumeUrl?.startsWith("data:") ? "/resume" : (profile?.resumeUrl || "#");
+    const cleanSiteResume = siteContent?.resumeUrl?.startsWith("data:")
+      ? "/resume"
+      : (siteContent?.resumeUrl || cleanProfileResume || "#");
+
     const serializedProfile = profile
       ? {
           ...profile,
+          resumeUrl: cleanProfileResume,
           createdAt: profile.createdAt ? profile.createdAt.toISOString() : new Date().toISOString(),
           updatedAt: profile.updatedAt ? profile.updatedAt.toISOString() : new Date().toISOString(),
           stats: safeJsonParse(profile.stats, []),
@@ -52,11 +57,12 @@ async function getProjectsData() {
     const serializedSiteContent = siteContent
       ? {
           ...siteContent,
+          resumeUrl: cleanSiteResume,
           createdAt: siteContent.createdAt ? siteContent.createdAt.toISOString() : new Date().toISOString(),
           updatedAt: siteContent.updatedAt ? siteContent.updatedAt.toISOString() : new Date().toISOString(),
           socialLinks: profile?.socialLinks || "[]",
         }
-      : { socialLinks: profile?.socialLinks || "[]" };
+      : { socialLinks: profile?.socialLinks || "[]", resumeUrl: cleanSiteResume };
 
     const serializedProjects = (projects || []).map((p) => {
       const rawTechStack = safeJsonParse(p.techStack, []);

@@ -3,15 +3,24 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { User, Code2, Briefcase, Layers, Send, Menu, X, ArrowUpRight } from "lucide-react";
+import {
+  User,
+  Code2,
+  Briefcase,
+  Layers,
+  Send,
+  FileText,
+  ArrowUpRight,
+  Sparkles,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navLinks = [
-  { href: "#about", label: "About", icon: User },
-  { href: "#skills", label: "Skills", icon: Code2 },
-  { href: "#experience", label: "Experience", icon: Briefcase },
-  { href: "#projects", label: "Projects", icon: Layers },
-  { href: "#contact", label: "Contact", icon: Send },
+const navSections = [
+  { href: "#about", label: "About", icon: User, color: "from-blue-600 to-indigo-600" },
+  { href: "#skills", label: "Skills", icon: Code2, color: "from-indigo-600 to-purple-600" },
+  { href: "#experience", label: "Experience", icon: Briefcase, color: "from-purple-600 to-pink-600" },
+  { href: "#projects", label: "Projects", icon: Layers, color: "from-pink-600 to-amber-500" },
+  { href: "#contact", label: "Contact", icon: Send, color: "from-emerald-500 to-teal-600" },
 ];
 
 interface NavbarProps {
@@ -19,74 +28,90 @@ interface NavbarProps {
   profile?: any;
 }
 
+
 /**
- * Custom Standalone Hexagon Logo Mark
- * Outer hexagon stroked with the site's accent gradient (blue → purple → coral),
- * containing a solid mid-tone purple (#8B5CF6) initial for maximum clarity and contrast.
+ * Circular Scroll Percentage Gauge Component (Self-contained RAF for 0 re-render overhead)
  */
-function HexagonLogoMark({ initial }: { initial: string }) {
+function ScrollProgressGauge() {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+          if (scrollHeight > 0) {
+            const percent = (window.scrollY / scrollHeight) * 100;
+            setProgress(Math.min(100, Math.max(0, percent)));
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const size = 32;
+  const strokeWidth = 2.5;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+
   return (
-    <motion.div
-      whileHover={{ scale: 1.08, rotate: 3 }}
-      whileTap={{ scale: 0.94 }}
-      transition={{ type: "spring", stiffness: 400, damping: 20 }}
-      className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center cursor-pointer select-none shrink-0"
-    >
-      {/* Hexagon SVG Outline Stroked with Accent Gradient */}
-      <svg
-        viewBox="0 0 32 32"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full drop-shadow-xs pointer-events-none"
-      >
+    <div className="relative w-8 h-8 flex items-center justify-center shrink-0 select-none" title={`Page Scrolled: ${Math.round(progress)}%`}>
+      <svg width={size} height={size} className="transform -rotate-90">
         <defs>
-          <linearGradient id="hex-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id="gauge-grad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#2563EB" />
             <stop offset="50%" stopColor="#8B5CF6" />
             <stop offset="100%" stopColor="#F59E0B" />
           </linearGradient>
         </defs>
-
-        {/* Hexagon Outline Stroked with Accent Gradient */}
-        <path
-          d="M16 3.5L26.5 9.5C27.1 9.8 27.5 10.5 27.5 11.2V20.8C27.5 21.5 27.1 22.2 26.5 22.5L16 28.5C15.4 28.8 14.6 28.8 14 28.5L3.5 22.5C2.9 22.2 2.5 21.5 2.5 20.8V11.2C2.5 10.5 2.9 9.8 3.5 9.5L14 3.5C14.6 3.2 15.4 3.2 16 3.5Z"
+        {/* Track */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
           fill="none"
-          stroke="url(#hex-logo-gradient)"
-          strokeWidth="2.5"
+          stroke="#e2e8f0"
+          strokeWidth={strokeWidth}
+        />
+        {/* Progress Arc */}
+        <motion.circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="url(#gauge-grad)"
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
-          strokeLinejoin="round"
+          transition={{ duration: 0.1, ease: "linear" }}
         />
       </svg>
-
-      {/* HTML <span> Initial Overlay using exact site font-family CSS (Inter/font-sans) */}
-      <span className="absolute inset-0 flex items-center justify-center font-sans text-xs sm:text-sm font-extrabold text-[#8b5cf6] leading-none select-none tracking-tight">
-        {initial}
+      <span className="absolute font-mono text-[9px] font-bold text-slate-700 tracking-tighter">
+        {Math.round(progress)}%
       </span>
-    </motion.div>
+    </div>
   );
 }
 
 export default function Navbar({ siteContent, profile }: NavbarProps) {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("#about");
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
 
   const shouldReduceMotion = useReducedMotion();
 
   const name = siteContent?.heroName || profile?.name || "Shivam Zaware";
-  const displayInitial = (name && name.trim().length > 0) ? name.trim()[0].toUpperCase() : "S";
+  const displayInitial = name && name.trim().length > 0 ? name.trim()[0].toUpperCase() : "S";
+  const resumeLink = profile?.resumeUrl || siteContent?.resumeUrl || null;
 
-  // Handle scroll condensation and backdrop blur intensity
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 30);
-    };
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
-  // IntersectionObserver for active section tracking
+  // Section Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -105,13 +130,28 @@ export default function Navbar({ siteContent, profile }: NavbarProps) {
   }, []);
 
   const handleNavClick = (href: string) => {
-    setMobileOpen(false);
     setActiveSection(href);
     const target = document.querySelector(href);
     if (target) {
-      target.scrollIntoView({ behavior: "smooth" });
+      if ((window as any).lenis) {
+        (window as any).lenis.scrollTo(target, {
+          offset: -40,
+          duration: 1.2,
+          easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        });
+      } else {
+        target.scrollIntoView({ behavior: "smooth" });
+      }
     } else {
       window.location.href = `/${href}`;
+    }
+  };
+
+  const handleResumeClick = () => {
+    if (resumeLink) {
+      window.open(resumeLink, "_blank");
+    } else {
+      handleNavClick("#about");
     }
   };
 
@@ -119,65 +159,72 @@ export default function Navbar({ siteContent, profile }: NavbarProps) {
 
   return (
     <>
-      {/* DESKTOP & TABLET: Floating iOS White Glass Pill Navbar */}
-      <div className="fixed top-0 left-0 right-0 z-[100] pointer-events-none flex justify-center pt-3 sm:pt-4 px-4 transition-all duration-300">
+      {/* 🚀 MODERN EXECUTIVE FLOATING DYNAMIC HUB */}
+      <div className="fixed top-0 left-0 right-0 z-[100] pointer-events-none flex justify-center pt-3.5 sm:pt-4 px-4 transition-all duration-300">
         <motion.header
-          initial={shouldReduceMotion ? { opacity: 0 } : { y: -50, opacity: 0 }}
+          initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 350, damping: 25 }}
+          transition={{ type: "spring", stiffness: 400, damping: 28 }}
           style={{
-            backdropFilter: scrolled ? "blur(24px) saturate(190%)" : "blur(18px) saturate(170%)",
-            WebkitBackdropFilter: scrolled ? "blur(24px) saturate(190%)" : "blur(18px) saturate(170%)",
+            backdropFilter: "blur(26px) saturate(190%)",
+            WebkitBackdropFilter: "blur(26px) saturate(190%)",
           }}
           className={cn(
-            "pointer-events-auto relative flex items-center justify-between gap-3 sm:gap-5 rounded-full border border-white/80 bg-white/80 shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all duration-300",
-            scrolled ? "py-1.5 px-3 sm:px-4 shadow-md bg-white/90" : "py-2 px-3.5 sm:px-5"
+            "pointer-events-auto relative flex items-center justify-between gap-2.5 sm:gap-4 p-1.5 pl-2.5 pr-2 rounded-full",
+            "bg-white/85 border border-white/80 shadow-[0_12px_36px_rgba(0,0,0,0.07),0_1px_3px_rgba(0,0,0,0.02),inset_0_1px_1px_rgba(255,255,255,0.95)]",
+            "hover:bg-white/95 transition-all duration-300"
           )}
         >
-          {/* Icon-Only Hexagon Brand Logo Mark (No Wordmark Text) */}
-          <Link
-            href="/"
-            aria-label={`${name} — Home`}
-            className="flex items-center justify-center p-0.5 rounded-full hover:bg-black/5 transition-colors duration-200"
-          >
-            <HexagonLogoMark initial={displayInitial} />
-          </Link>
+          {/* 1. Left: Circular Scroll Progress Gauge */}
+          <div className="flex items-center pl-1">
+            <ScrollProgressGauge />
+          </div>
 
-          {/* Inline Navigation with Accent Gradient Sliding Segmented Indicator */}
+
+          {/* 2. Middle: Dynamic Segmented Section Navigation */}
           <nav
-            className="hidden md:flex items-center relative p-1 rounded-full bg-slate-100/80 border border-slate-200/60"
+            className="hidden md:flex items-center relative p-1 rounded-full bg-slate-100/80 border border-slate-200/50 shadow-inner"
             onMouseLeave={() => setHoveredSection(null)}
           >
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const isHighlighted = currentIndicator === link.href;
+            {navSections.map((item) => {
+              const Icon = item.icon;
+              const isHighlighted = currentIndicator === item.href;
 
               return (
                 <motion.button
-                  key={link.href}
-                  onClick={() => handleNavClick(link.href)}
-                  onMouseEnter={() => setHoveredSection(link.href)}
+                  key={item.href}
+                  onClick={() => handleNavClick(item.href)}
+                  onMouseEnter={() => setHoveredSection(item.href)}
                   whileTap={shouldReduceMotion ? {} : { scale: 0.95 }}
                   className={cn(
-                    "relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs transition-colors duration-200 z-10 select-none cursor-pointer",
+                    "relative flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-colors duration-200 z-10 select-none cursor-pointer",
                     isHighlighted
-                      ? "text-white font-bold"
-                      : "text-slate-600 font-medium hover:text-slate-950"
+                      ? "text-white"
+                      : "text-slate-600 hover:text-slate-950 font-medium"
                   )}
                 >
-                  <Icon size={13} className={cn("transition-transform duration-200", isHighlighted ? "scale-110 text-white" : "opacity-70")} />
-                  <span>{link.label}</span>
+                  <Icon
+                    size={13}
+                    className={cn(
+                      "transition-transform duration-200",
+                      isHighlighted ? "scale-110 text-white" : "opacity-70"
+                    )}
+                  />
+                  <span>{item.label}</span>
 
-                  {/* Accent Gradient Sliding Segmented Active Indicator */}
+                  {/* Active Sliding Gradient Pill */}
                   {isHighlighted && (
                     <motion.div
-                      layoutId="active-pill"
+                      layoutId="active-hub-pill"
                       transition={
                         shouldReduceMotion
                           ? { duration: 0.15 }
-                          : { type: "spring", stiffness: 420, damping: 32 }
+                          : { type: "spring", stiffness: 440, damping: 30 }
                       }
-                      className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-amber-500 rounded-full -z-10 shadow-sm shadow-blue-500/25"
+                      className={cn(
+                        "absolute inset-0 bg-gradient-to-r rounded-full -z-10 shadow-sm shadow-blue-500/25",
+                        item.color
+                      )}
                     />
                   )}
                 </motion.button>
@@ -185,72 +232,68 @@ export default function Navbar({ siteContent, profile }: NavbarProps) {
             })}
           </nav>
 
-          {/* CTA Action Button */}
-          <div className="hidden md:flex items-center gap-2 pl-1">
+          {/* 3. Right: Resume Action + Connect CTA */}
+          <div className="flex items-center gap-2">
+            {/* Quick Resume View/Download Button */}
+            <motion.button
+              onClick={handleResumeClick}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.94 }}
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200/60 text-slate-700 text-xs font-semibold transition-all cursor-pointer select-none"
+              title="View Resume / CV"
+            >
+              <FileText size={13} className="text-slate-500" />
+              <span>Resume</span>
+            </motion.button>
+
+            {/* Connect CTA Button */}
             <motion.button
               onClick={() => handleNavClick("#contact")}
-              whileHover={shouldReduceMotion ? {} : { scale: 1.03 }}
+              whileHover={shouldReduceMotion ? {} : { scale: 1.04 }}
               whileTap={shouldReduceMotion ? {} : { scale: 0.94 }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all duration-200 cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-sm shadow-blue-500/20 hover:shadow-md hover:shadow-indigo-500/30 transition-all cursor-pointer shrink-0"
             >
-              <span>Get in touch</span>
-              <ArrowUpRight size={13} />
+              <span>Connect</span>
+              <ArrowUpRight size={12} />
             </motion.button>
           </div>
-
-          {/* Mobile Menu Toggle Button */}
-          <motion.button
-            whileTap={shouldReduceMotion ? {} : { scale: 0.92 }}
-            className="md:hidden p-2 rounded-full text-slate-800 hover:bg-black/5 transition-colors"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle navigation"
-            id="mobile-menu-toggle"
-          >
-            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
-          </motion.button>
         </motion.header>
       </div>
 
-      {/* MOBILE: Bottom iOS Docked Floating White Glass Tab Bar */}
-      <div className="md:hidden fixed bottom-4 left-4 right-4 z-[100] max-w-md mx-auto pointer-events-auto">
+      {/* MOBILE BOTTOM DOCK: Minimal Dynamic Bar */}
+      <div className="md:hidden fixed bottom-4 left-0 right-0 z-[100] px-4 flex justify-center pointer-events-auto">
         <motion.div
-          initial={{ y: 80, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 350, damping: 28 }}
           style={{
             backdropFilter: "blur(24px) saturate(190%)",
             WebkitBackdropFilter: "blur(24px) saturate(190%)",
           }}
-          className="flex items-center justify-around p-1.5 rounded-full border border-white/80 bg-white/90 shadow-[0_12px_40px_rgba(0,0,0,0.12)] pb-[calc(0.5rem+env(safe-area-inset-bottom))]"
+          className="flex items-center justify-around w-full max-w-[360px] p-1.5 rounded-full bg-white/90 border border-white/80 shadow-[0_12px_36px_rgba(0,0,0,0.12),inset_0_1px_1px_rgba(255,255,255,0.95)]"
         >
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = activeSection === link.href;
+          {navSections.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeSection === item.href;
 
             return (
               <motion.button
-                key={link.href}
-                onClick={() => handleNavClick(link.href)}
-                whileTap={shouldReduceMotion ? {} : { scale: 0.92 }}
+                key={item.href}
+                onClick={() => handleNavClick(item.href)}
+                whileTap={{ scale: 0.9 }}
                 className={cn(
-                  "relative flex flex-col items-center justify-center min-w-[54px] min-h-[44px] px-2 py-1 rounded-full text-[10px] transition-colors duration-200 cursor-pointer select-none",
-                  isActive
-                    ? "text-white font-bold"
-                    : "text-slate-500 hover:text-slate-900 font-medium"
+                  "relative flex flex-col items-center justify-center w-14 h-11 rounded-full text-[10px] font-semibold transition-all cursor-pointer select-none",
+                  isActive ? "text-white font-bold" : "text-slate-500 hover:text-slate-900"
                 )}
               >
-                <Icon size={16} className="mb-0.5" />
-                <span className="leading-none">{link.label}</span>
+                <Icon size={16} className="mb-0.5 relative z-10" />
+                <span className="text-[9px] relative z-10 leading-none">{item.label}</span>
 
                 {isActive && (
                   <motion.div
-                    layoutId="mobile-active-pill"
-                    transition={
-                      shouldReduceMotion
-                        ? { duration: 0.15 }
-                        : { type: "spring", stiffness: 400, damping: 30 }
-                    }
-                    className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-amber-500 rounded-full -z-10 shadow-xs"
+                    layoutId="mobile-hub-active-pill"
+                    transition={{ type: "spring", stiffness: 450, damping: 30 }}
+                    className={cn(
+                      "absolute inset-0 bg-gradient-to-tr rounded-full shadow-xs",
+                      item.color
+                    )}
                   />
                 )}
               </motion.button>
@@ -258,58 +301,6 @@ export default function Navbar({ siteContent, profile }: NavbarProps) {
           })}
         </motion.div>
       </div>
-
-      {/* Mobile Top Dropdown Menu */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            style={{
-              backdropFilter: "blur(20px) saturate(180%)",
-              WebkitBackdropFilter: "blur(20px) saturate(180%)",
-            }}
-            className="fixed top-20 left-4 right-4 z-[99] p-4 rounded-3xl border border-white/80 bg-white/95 shadow-2xl md:hidden space-y-2"
-          >
-            <div className="grid grid-cols-2 gap-2">
-              {navLinks.map((link) => {
-                const Icon = link.icon;
-                const isActive = activeSection === link.href;
-
-                return (
-                  <motion.button
-                    key={link.href}
-                    onClick={() => handleNavClick(link.href)}
-                    whileTap={{ scale: 0.96 }}
-                    className={cn(
-                      "flex items-center gap-2.5 p-3 rounded-2xl text-xs font-semibold transition-all cursor-pointer",
-                      isActive
-                        ? "bg-gradient-to-r from-blue-600 via-purple-600 to-amber-500 text-white shadow-xs"
-                        : "bg-slate-100/90 text-slate-700 hover:bg-slate-200/80"
-                    )}
-                  >
-                    <Icon size={16} />
-                    <span>{link.label}</span>
-                  </motion.button>
-                );
-              })}
-            </div>
-
-            <div className="pt-2 border-t border-slate-200/70">
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={() => handleNavClick("#contact")}
-                className="w-full flex items-center justify-center gap-2 p-3 rounded-2xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-md cursor-pointer"
-              >
-                <span>Get in touch</span>
-                <ArrowUpRight size={14} />
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 }

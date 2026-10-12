@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { SectionWrapper } from "@/components/ui/SectionWrapper";
+import { SpatialCard, SpecularShimmerBeam } from "@/components/ui/SpatialCard";
 import {
   ExternalLink,
   Github,
@@ -270,25 +271,24 @@ export default function Projects({ projects, isHomepage = true }: ProjectsProps)
                 const overflowTechs = techItems.slice(3);
 
                 return (
-                  <motion.div
+                  <SpatialCard
                     key={project.id}
-                    layout
-                    initial={{ opacity: 0, scale: 1.03, y: 15 }}
-                    whileInView={{ opacity: 1, scale: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-60px" }}
-                    transition={{ duration: 0.45, delay: idx * 0.06, ease: [0.16, 1, 0.3, 1] }}
-                    onClick={() => openDetailModal(project)}
-                    className={`group relative rounded-3xl bg-white/95 border border-blue-500/10 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_45px_rgba(59,130,246,0.14)] hover:border-blue-500/30 backdrop-blur-xs transition-all duration-300 cursor-pointer flex flex-col overflow-hidden hover:-translate-y-1.5 ${
-                      isHeroSpan ? "md:col-span-2 lg:col-span-2" : "col-span-1"
-                    }`}
-                    style={{ transform: "translateZ(0)" }}
+                    glowColor="rgba(59,130,246,0.18)"
+                    className={isHeroSpan ? "md:col-span-2 lg:col-span-2" : "col-span-1"}
                   >
-                    {/* Thumbnail Image Container */}
-                    <div className={`relative overflow-hidden bg-slate-950 ${isHeroSpan ? "h-64 sm:h-76" : "h-52"}`}>
+                    <div
+                      onClick={() => openDetailModal(project)}
+                      className="group relative rounded-3xl bg-white/95 border border-blue-500/10 shadow-[0_4px_24px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_45px_rgba(59,130,246,0.14)] hover:border-blue-500/30 backdrop-blur-xs transition-all duration-300 cursor-pointer flex flex-col overflow-hidden h-full"
+                    >
+                      <SpecularShimmerBeam />
+                      {/* Thumbnail Image Container */}
+                      <div className={`relative overflow-hidden bg-slate-950 ${isHeroSpan ? "h-64 sm:h-76" : "h-52"}`}>
                       {coverImage ? (
                         <img
                           src={coverImage}
                           alt={project.title}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                         />
                       ) : (
@@ -452,8 +452,11 @@ export default function Projects({ projects, isHomepage = true }: ProjectsProps)
                         </span>
                       </div>
                     </div>
-                  </motion.div>
-                );
+                  </div>
+                </SpatialCard>
+              );
+
+
               })}
             </div>
           )}
@@ -539,6 +542,8 @@ export default function Projects({ projects, isHomepage = true }: ProjectsProps)
                           <img
                             src={activeImage}
                             alt={selectedProject.title}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
                           />
                         ) : (

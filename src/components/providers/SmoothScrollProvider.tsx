@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion, useScroll, useSpring, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import Lenis from "lenis";
 
 export function SmoothScrollProvider({ children }: { children: React.ReactNode }) {
@@ -10,12 +10,20 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (shouldReduceMotion) return;
 
+
+    // Velvet smooth lerp interpolation for effortless momentum scrolling
     const lenis = new Lenis({
-      duration: 0.9,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      touchMultiplier: 1.0,
+      lerp: 0.08, // Liquid smooth inertia gliding
+
+      orientation: "vertical",
+      gestureOrientation: "vertical",
+      smoothWheel: true,
+      wheelMultiplier: 0.9,
+      touchMultiplier: 1.2,
       infinite: false,
     });
+
+    (window as any).lenis = lenis;
 
     function raf(time: number) {
       lenis.raf(time);
@@ -27,28 +35,15 @@ export function SmoothScrollProvider({ children }: { children: React.ReactNode }
     return () => {
       cancelAnimationFrame(rafId);
       lenis.destroy();
+      delete (window as any).lenis;
     };
   }, [shouldReduceMotion]);
+
 
   return <>{children}</>;
 }
 
 export function ScrollProgressBar() {
-  const { scrollYProgress } = useScroll();
-  const shouldReduceMotion = useReducedMotion();
-
-  const scaleX = useSpring(scrollYProgress, {
-    stiffness: 500,
-    damping: 35,
-    restDelta: 0.001,
-  });
-
-  if (shouldReduceMotion) return null;
-
-  return (
-    <motion.div
-      style={{ scaleX }}
-      className="fixed top-0 left-0 right-0 h-1 z-[110] bg-gradient-to-r from-blue-600 via-purple-600 to-amber-500 origin-left pointer-events-none shadow-xs"
-    />
-  );
+  return null;
 }
+

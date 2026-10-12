@@ -9,8 +9,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Enable server actions (used by NextAuth)
-  experimental: {},
+  experimental: {
+    optimizePackageImports: ["lucide-react", "react-icons"],
+  },
 };
 
 export default nextConfig;

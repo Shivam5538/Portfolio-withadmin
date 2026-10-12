@@ -9,9 +9,10 @@ import Experience from "@/components/sections/Experience";
 import Projects from "@/components/sections/Projects";
 import Contact from "@/components/sections/Contact";
 import { SmoothScrollProvider, ScrollProgressBar } from "@/components/providers/SmoothScrollProvider";
+import { ScrollAmbientGlow } from "@/components/ui/ScrollAmbientGlow";
 
-export const dynamic = "force-dynamic"; // Always fetch fresh data from DB
-export const revalidate = 0;
+
+export const revalidate = 60; // Enable ISR caching: fast static delivery, revalidated in background or via admin revalidatePath
 
 function safeJsonParse<T>(val: any, fallback: T): T {
   if (!val) return fallback;
@@ -25,19 +26,28 @@ function safeJsonParse<T>(val: any, fallback: T): T {
 
 async function getData() {
   try {
-    const [profile, siteContent, experience, projects, layoutSetting, allTechnologies, dbSkills] = await Promise.all([
+    const [
+      profile,
+      siteContent,
+      experience,
+      projects,
+      layoutSetting,
+      allTechnologies,
+      dbSkills,
+      allSlotAssignments,
+    ] = await Promise.all([
       prisma.profile.findFirst().catch((err) => {
-        console.error("Error fetching profile:", err);
+        console.warn("Notice: could not fetch profile (database may be sleeping/waking up):", err?.message || err);
         return null;
       }),
       prisma.siteContent.findFirst().catch((err) => {
-        console.error("Error fetching siteContent:", err);
+        console.warn("Notice: could not fetch siteContent:", err?.message || err);
         return null;
       }),
       prisma.experience
         .findMany({ orderBy: [{ order: "asc" }, { startDate: "desc" }] })
         .catch((err) => {
-          console.error("Error fetching experience:", err);
+          console.warn("Notice: could not fetch experience:", err?.message || err);
           return [];
         }),
       prisma.project
@@ -45,38 +55,36 @@ async function getData() {
           orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }],
         })
         .catch((err) => {
-          console.error("Error fetching projects:", err);
+          console.warn("Notice: could not fetch projects:", err?.message || err);
           return [];
         }),
       prisma.layoutSetting.findFirst().catch((err) => {
-        console.error("Error fetching layoutSetting:", err);
+        console.warn("Notice: could not fetch layoutSetting:", err?.message || err);
         return null;
       }),
       prisma.technology.findMany().catch((err) => {
-        console.error("Error fetching technologies:", err);
+        console.warn("Notice: could not fetch technologies:", err?.message || err);
         return [];
       }),
       prisma.skill
         .findMany({ orderBy: { order: "asc" } })
         .catch((err) => {
-          console.error("Error fetching skills:", err);
+          console.warn("Notice: could not fetch skills:", err?.message || err);
+          return [];
+        }),
+      prisma.slotAssignment
+        .findMany({ include: { technology: true } })
+        .catch((err) => {
+          console.warn("Notice: could not fetch slotAssignments:", err?.message || err);
           return [];
         }),
     ]);
 
     const activeTemplateId = layoutSetting?.activeTemplateId || "template_1";
     const activeStatsTemplate = layoutSetting?.activeStatsTemplate || "template_1";
-
-    let slotAssignments: any[] = [];
-    try {
-      slotAssignments = await prisma.slotAssignment.findMany({
-        where: { templateId: activeTemplateId },
-        include: { technology: true },
-      });
-    } catch (err) {
-      console.error("Error fetching slotAssignments:", err);
-      slotAssignments = [];
-    }
+    const slotAssignments = (allSlotAssignments || []).filter(
+      (a) => a.templateId === activeTemplateId
+    );
 
     return {
       profile,
@@ -118,9 +126,15 @@ export default async function HomePage() {
     skills,
   } = await getData();
 
+  const cleanProfileResume = profile?.resumeUrl?.startsWith("data:") ? "/resume" : (profile?.resumeUrl || "#");
+  const cleanSiteResume = siteContent?.resumeUrl?.startsWith("data:")
+    ? "/resume"
+    : (siteContent?.resumeUrl || cleanProfileResume || "#");
+
   const serializedProfile = profile
     ? {
         ...profile,
+        resumeUrl: cleanProfileResume,
         createdAt: profile.createdAt ? profile.createdAt.toISOString() : new Date().toISOString(),
         updatedAt: profile.updatedAt ? profile.updatedAt.toISOString() : new Date().toISOString(),
         stats: safeJsonParse(profile.stats, []),
@@ -163,6 +177,7 @@ export default async function HomePage() {
   const serializedSiteContent = siteContent
     ? {
         ...siteContent,
+        resumeUrl: cleanSiteResume,
         activeStatsTemplate: effectiveStatsTemplate,
         createdAt: siteContent.createdAt ? siteContent.createdAt.toISOString() : new Date().toISOString(),
         updatedAt: siteContent.updatedAt ? siteContent.updatedAt.toISOString() : new Date().toISOString(),
@@ -170,7 +185,7 @@ export default async function HomePage() {
         heroTechMarquee: JSON.stringify(resolvedHeroTechs),
         socialLinks: profile?.socialLinks || "[]",
       }
-    : { activeStatsTemplate: effectiveStatsTemplate, socialLinks: profile?.socialLinks || "[]" };
+    : { activeStatsTemplate: effectiveStatsTemplate, socialLinks: profile?.socialLinks || "[]", resumeUrl: cleanSiteResume };
 
   // Serialize dates for client components and parse JSON strings safely
   const serializedExperience = (experience || []).map((e) => {
@@ -246,8 +261,9 @@ export default async function HomePage() {
   return (
     <SmoothScrollProvider>
       <ScrollProgressBar />
+      <ScrollAmbientGlow />
       <Navbar siteContent={serializedSiteContent} profile={serializedProfile} />
-      <main>
+      <main className="relative z-10">
         <Hero siteContent={serializedSiteContent} />
         <About siteContent={serializedSiteContent} profile={serializedProfile} />
         <Stats siteContent={serializedSiteContent} activeStatsTemplate={effectiveStatsTemplate} />
@@ -260,3 +276,4 @@ export default async function HomePage() {
     </SmoothScrollProvider>
   );
 }
+
